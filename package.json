@@ -1,0 +1,25 @@
+{
+  "name": "widget-st-musik",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "ci:ts": "tsc",
+    "ci:lint": "eslint .",
+    "ci:format": "prettier --check .",
+    "lint": "eslint --fix .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "typescript": "6.0.2",
+    "vite": "8.2.0",
+    "@eslint/js": "10.0.1",
+    "@typescript-eslint/parser": "8.57.1",
+    "eslint": "10.1.0",
+    "lefthook": "2.1.10",
+    "typescript-eslint": "8.57.1",
+    "prettier": "3.8.1"
+  }
+}
