@@ -1,2 +1,33 @@
-.widget_st_musik {
+#widget_st_musik {
+  --color-k: #000000;
+  --color-w: #ffffff;
+  --color-gr: #676565;
+  --color-gr2: #c6b5c1;
+
+  max-width: 250px;
+}
+
+.btn {
+  width: 100%;
+}
+
+#top {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: auto 70px;
+  align-items: center;
+}
+
+#track {
+  background-color: var(--color-k);
+  color: var(--color-w);
+
+  span {
+    font-size: 12px;
+  }
+}
+
+#middle {
+  display: flex;
+  justify-content: space-evenly;
 }
