@@ -116,7 +116,7 @@
   color: #424242;
   box-shadow: -1px -1px #000;
 }
-.btn:active:not(.btn_primary) {
+.btn:active:not(.btn_primary, :disabled) {
   border: 2px inset #fff !important;
   color: #424242;
   box-shadow: -1px -1px #000 !important;

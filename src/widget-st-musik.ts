@@ -7,6 +7,7 @@ let currentTrackIndex = -1;
 let player: ShadowRoot | null = null;
 const audio = document.createElement("audio");
 let trackEl: HTMLSpanElement | null = null;
+let durationEl: HTMLSpanElement | null = null;
 
 function switchTrack(direction: "prev" | "next") {
   if (direction === "prev") {
@@ -51,7 +52,7 @@ function initialize() {
 
 function initializePlayer() {
   trackEl = player!.querySelector("#track")!;
-
+  durationEl = player!.querySelector("#duration")!;
   trackEl.textContent = "No track selected";
 }
 
@@ -66,8 +67,24 @@ async function getTracks() {
   }
 }
 
+function formatTime(time: number) {
+  if (Number.isNaN(time)) {
+    return "00:00";
+  }
+  const min = String(Math.floor(time / 60)).padStart(2, "0");
+  const sec = String(Math.floor(time % 60)).padStart(2, "0");
+
+  return `${min}:${sec}`;
+}
+
 function attachEvents() {
-  const [btnPrevTrack, btnRewind, btnPlay, btnForward, btnNextTrack] = [
+  const [
+    btnPrevTrack,
+    btnRewind,
+    btnPlay,
+    btnForward,
+    btnNextTrack,
+  ]: HTMLButtonElement[] = [
     player!.querySelector("#btn_previous_track")!,
     player!.querySelector("#btn_rewind")!,
     player!.querySelector("#btn_play")!,
@@ -106,16 +123,28 @@ function attachEvents() {
 
   audio.addEventListener("play", () => {
     btnPlay.classList.add("btn_controlled");
+    btnForward.disabled = false;
+    btnRewind.disabled = false;
   });
 
   audio.addEventListener("pause", () => {
     btnPlay.classList.remove("btn_controlled");
+    btnForward.disabled = true;
+    btnRewind.disabled = true;
+  });
+
+  audio.addEventListener("timeupdate", () => {
+    durationEl!.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+  });
+
+  audio.addEventListener("loadedmetadata", () => {
+    durationEl!.textContent = `00:00 / ${formatTime(audio.duration)}`;
   });
 }
 
-(() => {
+(async () => {
   initialize();
   initializePlayer();
-  getTracks();
+  await getTracks();
   attachEvents();
 })();
