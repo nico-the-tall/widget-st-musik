@@ -47,7 +47,7 @@
   border: 1px outset #fff;
 }
 ::-webkit-scrollbar-track {
-  background-image: url(background.bmp);
+  /* background-image: url(background.bmp); */
 }
 ::-webkit-scrollbar-thumb:vertical {
   border: 1px outset #fff;
@@ -116,16 +116,11 @@
   color: #424242;
   box-shadow: -1px -1px #000;
 }
-.btn:active {
+.btn:active:not(.btn_primary) {
   border: 2px inset #fff !important;
   color: #424242;
   box-shadow: -1px -1px #000 !important;
   outline: 0 !important;
-  background: url(background.bmp);
-}
-.btn-primary {
-  padding-left: 8px;
-  padding-right: 8px;
 }
 button:focus {
   outline: 1px dotted;

@@ -18,9 +18,11 @@
   align-items: center;
 }
 
-#track {
+#track_wrapper {
   background-color: var(--color-k);
   color: var(--color-w);
+  width: 100%;
+  height: 100%;
 
   span {
     font-size: 12px;
@@ -30,4 +32,11 @@
 #middle {
   display: flex;
   justify-content: space-evenly;
+}
+
+.btn_controlled {
+  border: 2px inset #fff !important;
+  color: #424242;
+  box-shadow: -1px -1px #000 !important;
+  outline: 0 !important;
 }

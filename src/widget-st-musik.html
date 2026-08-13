@@ -4,19 +4,19 @@
   </div>
   <div class="card-body">
     <div id="top">
-      <div id="track">
-        <span>No track</span>
+      <div id="track_wrapper">
+        <span id="track" />
       </div>
-      <div id="duration">
-        <span>--:-- / --:--</span>
+      <div id="duration_wrapper">
+        <span id="duration">--:-- / --:--</span>
       </div>
     </div>
     <div id="middle">
-      <button class="btn">⏮</button>
-      <button class="btn">⏴</button>
-      <button class="btn">⏯</button>
-      <button class="btn">⏵</button>
-      <button class="btn">⏭</button>
+      <button class="btn" id="btn_previous_track">⏮</button>
+      <button class="btn" id="btn_rewind">⏴</button>
+      <button class="btn btn_primary" id="btn_play">⏯</button>
+      <button class="btn" id="btn_forward">⏵</button>
+      <button class="btn" id="btn_next_track">⏭</button>
     </div>
     <div id="bottom">
       <button class="btn">Expand Track List</button>
