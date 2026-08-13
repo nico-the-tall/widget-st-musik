@@ -47,7 +47,7 @@
   border: 1px outset #fff;
 }
 ::-webkit-scrollbar-track {
-  /* background-image: url(background.bmp); */
+  background-color: #ddd;
 }
 ::-webkit-scrollbar-thumb:vertical {
   border: 1px outset #fff;

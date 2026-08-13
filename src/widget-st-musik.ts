@@ -8,6 +8,19 @@ let player: ShadowRoot | null = null;
 const audio = document.createElement("audio");
 let trackEl: HTMLSpanElement | null = null;
 let durationEl: HTMLSpanElement | null = null;
+let listEl: HTMLDivElement | null = null;
+
+function setTrack() {
+  const track = tracks[currentTrackIndex];
+  audio.src = `tracks/${track}`;
+  trackEl!.textContent = track;
+  audio.play();
+}
+
+function switchTrackToIndex(index: number) {
+  currentTrackIndex = index;
+  setTrack();
+}
 
 function switchTrack(direction: "prev" | "next") {
   if (direction === "prev") {
@@ -21,9 +34,7 @@ function switchTrack(direction: "prev" | "next") {
     currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
   }
 
-  const track = tracks[currentTrackIndex];
-  audio.src = `tracks/${track}`;
-  trackEl!.textContent = track;
+  setTrack();
 }
 
 function initialize() {
@@ -43,6 +54,7 @@ function initialize() {
     shadow.appendChild(audio);
 
     player = container.shadowRoot;
+    listEl = player!.querySelector("#list");
   } catch {
     console.error(
       'Could not initialize Musik. Ensure a <div> with id "widget_st_musik" exists on your site.',
@@ -62,6 +74,14 @@ async function getTracks() {
     const raw = await res.text();
 
     tracks = raw.split("\n");
+
+    tracks.forEach((track, index) => {
+      const btn = document.createElement("button");
+      btn.textContent = track;
+      btn.setAttribute("data-idx", String(index));
+
+      listEl!.appendChild(btn);
+    });
   } catch {
     console.error("Could not fetch or process manifest.txt");
   }
@@ -84,17 +104,31 @@ function attachEvents() {
     btnPlay,
     btnForward,
     btnNextTrack,
+    btnList,
   ]: HTMLButtonElement[] = [
     player!.querySelector("#btn_previous_track")!,
     player!.querySelector("#btn_rewind")!,
     player!.querySelector("#btn_play")!,
     player!.querySelector("#btn_forward")!,
     player!.querySelector("#btn_next_track")!,
+    player!.querySelector("#list_btn")!,
   ];
+
+  btnList.addEventListener("click", () => {
+    listEl!.classList.toggle("list_hidden");
+  });
+
+  listEl!.addEventListener("click", (event) => {
+    const target = event.target as HTMLButtonElement;
+
+    if (target.tagName === "BUTTON") {
+      const index = target.getAttribute("data-idx");
+      switchTrackToIndex(Number(index));
+    }
+  });
 
   btnPrevTrack.addEventListener("click", () => {
     switchTrack("prev");
-    audio.play();
   });
 
   btnRewind.addEventListener("click", () => {
@@ -106,7 +140,6 @@ function attachEvents() {
       if (currentTrackIndex === -1) {
         switchTrack("next");
       }
-      audio.play();
     } else {
       audio.pause();
     }
@@ -118,7 +151,6 @@ function attachEvents() {
 
   btnNextTrack.addEventListener("click", () => {
     switchTrack("next");
-    audio.play();
   });
 
   audio.addEventListener("play", () => {

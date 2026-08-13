@@ -4,7 +4,6 @@
   --color-gr: #676565;
   --color-gr2: #c6b5c1;
   --font-sm: 12px;
-
   max-width: 250px;
 }
 
@@ -68,4 +67,27 @@
   color: #424242;
   box-shadow: -1px -1px #000 !important;
   outline: 0 !important;
+}
+
+#list {
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+  overflow: auto;
+}
+
+#list button {
+  background: #eee;
+  border: none;
+  border-radius: none;
+  text-align: left;
+  padding: 5px;
+}
+
+#list button:hover {
+  background-color: #ccc;
+}
+
+#list.list_hidden {
+  display: none;
 }
