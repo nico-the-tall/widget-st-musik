@@ -55,13 +55,28 @@ function initialize() {
 
     const style = document.createElement("style");
 
-    const builtInTheme = container.getAttribute("data-theme") ?? "win95";
+    const builtInThemeName = container.getAttribute("data-theme") ?? "win95";
+    const builtInTheme = themes[builtInThemeName];
 
     if (builtInTheme) {
-      style.textContent = themes[builtInTheme];
+      style.textContent = builtInTheme;
+    } else {
+      console.error(
+        "The selected theme for widget_st_musik does not exist. Please verify the name.",
+      );
     }
 
     shadow.appendChild(style);
+
+    const customStylesheetHref = container.getAttribute("data-stylesheet-href");
+
+    if (customStylesheetHref) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = customStylesheetHref;
+
+      shadow.appendChild(link);
+    }
 
     const root = document.createElement("div");
     root.innerHTML = markup;
