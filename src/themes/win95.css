@@ -173,6 +173,7 @@
   background-color: var(--color-k);
   color: var(--color-w);
   padding: 0 5px;
+  cursor: default;
 }
 
 #widget_st_musik_duration_wrapper {

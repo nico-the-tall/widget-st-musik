@@ -199,6 +199,7 @@
   background-color: var(--w7-el-bg);
   color: var(--w7-el-c);
   padding: 0 5px;
+  cursor: default;
 }
 
 #widget_st_musik_duration_wrapper {
