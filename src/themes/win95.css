@@ -124,12 +124,12 @@
 
 .widget_st_musik button:hover {
   color: var(--color-dark);
-  box-shadow: -1px -1px var(--color-k);
+  box-shadow: -1px -1px var(--color-gr2);
 }
 
 .widget_st_musik button:active:not(.btn_primary, :disabled),
 .widget_st_musik .btn_controlled {
-  border: 2px inset var(--color-w) !important;
+  border: 1px inset var(--color-w) !important;
   color: var(--color-dark);
   box-shadow: -1px -1px var(--color-k) !important;
   outline: 0 !important;
