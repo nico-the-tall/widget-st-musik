@@ -1,5 +1,17 @@
-import win95Theme from "./themes/win95.css?inline";
 import markup from "./widget-st-musik.html?raw";
+
+const themeModules = import.meta.glob<string>("./themes/*.css", {
+  eager: true,
+  query: "?inline",
+  import: "default",
+});
+
+const themes = Object.fromEntries(
+  Object.entries(themeModules).map(([path, css]) => [
+    path.match(/\/([^/]+)\.css$/)![1],
+    css,
+  ]),
+);
 
 let tracks: string[] = [];
 let currentTrackIndex = -1;
@@ -42,7 +54,12 @@ function initialize() {
     const shadow = container.attachShadow({ mode: "open" });
 
     const style = document.createElement("style");
-    style.textContent = win95Theme;
+
+    const builtInTheme = container.getAttribute("data-theme") ?? "win95";
+
+    if (builtInTheme) {
+      style.textContent = themes[builtInTheme];
+    }
 
     shadow.appendChild(style);
 
