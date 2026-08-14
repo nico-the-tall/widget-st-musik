@@ -1,0 +1,171 @@
+/*
+  Modified from:
+
+  tiny-brutalism.css
+  https://github.com/pruger/tiny-brutalism-css/blob/main/tiny-brutalism.css
+  Author: pruger
+  License: MIT
+
+  Version: 1.0.0
+  09.06.2024
+*/
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#widget_st_musik {
+  --color-bg: #fff;
+  --color-fg: #000;
+  --color-hl: #f4d738;
+  --color-hl: #ffa07a;
+  --color-hl2: #9723c9;
+  --color-disabled: #999;
+
+  font-family:
+    ui-monospace, Consolas, "SF Mono", Menlo, "Cascadia Mono", monospace;
+  width: 300px;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: 2px solid var(--color-fg);
+  box-shadow: 4px 4px 0 var(--color-fg);
+}
+
+.widget_st_musik div {
+  box-sizing: border-box;
+}
+
+.widget_st_musik button {
+  font-family: inherit;
+  width: 100%;
+  height: 25px;
+  padding: 0 6px;
+  text-align: center;
+  color: var(--color-fg);
+  background: var(--color-bg);
+  border: 2px solid var(--color-fg);
+  border-radius: 0;
+  box-shadow: 1px 1px 0 var(--color-fg);
+  cursor: pointer;
+}
+
+.widget_st_musik button:hover:not(:disabled) {
+  box-shadow: 2px 2px 0 var(--color-fg);
+}
+
+.widget_st_musik button:active:not(:disabled) {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.widget_st_musik button.btn_controlled {
+  background-color: var(--color-hl);
+}
+
+.widget_st_musik button:focus-visible {
+  outline: 2px dashed var(--color-fg);
+  outline-offset: 2px;
+}
+
+.widget_st_musik button:disabled {
+  cursor: default;
+  color: var(--color-disabled);
+  border-color: var(--color-fg);
+  box-shadow: 1px 1px 0 var(--color-fg);
+}
+
+.widget_st_musik_header {
+  background: var(--color-hl2);
+  color: var(--color-bg);
+  font-weight: 700;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 5px;
+  text-align: left;
+}
+
+#widget_st_musik_top {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: auto 130px;
+  align-items: center;
+  background: var(--color-hl);
+  color: var(--color-fg);
+  padding: 5px;
+  border-bottom: 2px solid var(--color-fg);
+}
+
+#widget_st_musik_duration_wrapper {
+  justify-self: end;
+  align-self: center;
+}
+
+#widget_st_musik_duration {
+  white-space: nowrap;
+  font-size: 12px;
+  max-width: 125px;
+  text-overflow: ellipsis;
+  display: block;
+  overflow: hidden;
+}
+
+#widget_st_musik_track_wrapper {
+  width: 100%;
+  height: 100%;
+
+  span {
+    font-size: 12px;
+  }
+}
+
+#widget_st_musik_track {
+  display: block;
+  margin: 5px 0;
+  max-width: 150px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#widget_st_musik_middle {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+#widget_st_musik_bottom {
+  margin-top: 5px;
+}
+
+#widget_st_musik_list {
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+  overflow: auto;
+}
+
+#widget_st_musik_list button {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: none;
+  border-bottom: 2px solid var(--color-fg);
+  border-radius: 0;
+  text-align: left;
+  padding: 5px;
+  box-shadow: none;
+  flex-shrink: 0;
+  height: auto;
+}
+
+#widget_st_musik_list button:hover,
+#widget_st_musik_list button:active {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+#widget_st_musik_list.list_hidden {
+  display: none;
+}
