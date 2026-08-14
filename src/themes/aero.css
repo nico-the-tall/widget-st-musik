@@ -1,0 +1,270 @@
+/*
+    Modified from:
+
+    7.css
+    https://github.com/khang-nd/7.css/
+    Author: Khang Nguyen Duy (khang-nd)
+    License: MIT
+
+    Version: 0.21.0
+    27.07.2025
+
+*/
+
+#widget_st_musik {
+  --w7-font: 9pt "Segoe UI", "SegoeUI", "Noto Sans", sans-serif;
+  --w7-surface: #f0f0f0;
+
+  --w7-el-bg: #f2f2f2;
+  --w7-el-bg-d: #f4f4f4;
+  --w7-el-bg-s-1: #ebebeb;
+  --w7-el-bg-s-2: #cfcfcf;
+
+  --w7-el-sd: inset 0 0 0 1px #fffc;
+  --w7-el-sd-a: inset 1px 1px 0 #0003, inset -1px 1px 0 #0001;
+
+  --w7-el-bd: #8e8f8f;
+  --w7-el-bd-h: #3c7fb1;
+  --w7-el-bd-a: #6d91ab;
+  --w7-el-bd-d: #adb2b5;
+  --w7-el-bdr: 3px;
+
+  --w7-el-c: #000000;
+  --w7-el-c-d: #838383;
+
+  --w7-el-grad: linear-gradient(
+    var(--w7-el-bg) 45%,
+    var(--w7-el-bg-s-1) 45%,
+    var(--w7-el-bg-s-2)
+  );
+  --w7-el-grad-h: linear-gradient(#eaf6fd 45%, #bee6fd 45%, #a7d9f5);
+  --w7-el-grad-a: linear-gradient(
+    #e5f4fc,
+    #c4e5f6 30% 50%,
+    #98d1ef 50%,
+    #68b3db
+  );
+
+  --w7-li-bd-hl: #aaddfa;
+  --w7-li-bg-hl: linear-gradient(#fff9, #e6ecf5cc 90%, #fffc);
+
+  --w7-sb-grad-a-1: #c4e5f6;
+  --w7-sb-grad-a-2: #98d1ef;
+  --w7-sb-grad-h-1: #eaf6fd;
+  --w7-sb-grad-h-2: #bee6fd;
+
+  --w7-sb-y: linear-gradient(to right, #e5e5e5, var(--w7-surface) 20%);
+  --w7-sb-x: linear-gradient(to bottom, #e5e5e5, var(--w7-surface) 20%);
+
+  font: var(--w7-font);
+  max-width: 250px;
+
+  border: 1px solid var(--w7-el-bd);
+  border-radius: var(--w7-el-bdr);
+  background: var(--w7-surface);
+  color: var(--w7-el-c);
+}
+
+.widget_st_musik button {
+  font: var(--w7-font);
+  box-sizing: border-box;
+  border: 1px solid var(--w7-el-bd);
+  border-radius: var(--w7-el-bdr);
+  box-shadow: var(--w7-el-sd);
+  color: #222;
+  width: 100%;
+  height: 25px;
+  padding: 0 6px;
+  text-align: center;
+  background: var(--w7-el-grad);
+  position: relative;
+  z-index: 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    top: 0;
+    left: 0;
+    border-radius: var(--w7-el-bdr);
+    box-shadow: var(--w7-el-sd);
+    background: var(--w7-el-grad-h);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: -1;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    top: 0;
+    left: 0;
+    box-shadow: var(--w7-el-sd-a);
+    border-radius: 2px;
+    background: var(--w7-el-grad-a);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: -1;
+  }
+
+  &:disabled {
+    background: var(--w7-el-bg-d);
+    border-color: var(--w7-el-bd-d);
+    color: var(--w7-el-c-d);
+  }
+
+  &:not(:disabled) {
+    &:hover {
+      border-color: var(--w7-el-bd-h);
+      transition: border-color 0.3s;
+
+      &::before {
+        opacity: 1;
+        transition: opacity 0.3s;
+      }
+    }
+
+    &:not(:hover) {
+      border-color: var(--w7-el-bd);
+      transition: border-color 1s linear;
+
+      &::before {
+        opacity: 0;
+        transition: opacity 1s linear;
+      }
+    }
+
+    &:active,
+    &.btn_controlled {
+      border-color: var(--w7-el-bd-a);
+      transition: border-color 0.3s;
+
+      &::after {
+        opacity: 1;
+        transition: opacity 0.3s;
+      }
+    }
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px #98d1ef;
+    outline: 1px dotted #000;
+    outline-offset: -4px;
+  }
+
+  &:focus {
+    border-color: #5586a3;
+    background-image: var(--w7-el-grad-h);
+    animation: 1s ease infinite alternate pulse-anim;
+  }
+}
+
+@keyframes pulse-anim {
+  from {
+    box-shadow: inset 0 0 3px 1px #34deffdd;
+  }
+  to {
+    box-shadow: inset 0 0 1px 1px #34deffdd;
+  }
+}
+
+.widget_st_musik_header {
+  background: var(--w7-el-grad-h);
+  color: var(--w7-el-c);
+  font-weight: bold;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 5px;
+  text-align: left;
+  border-radius: var(--w7-el-bdr) var(--w7-el-bdr) 0 0;
+}
+
+#widget_st_musik_top {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: auto 90px;
+  align-items: center;
+  background-color: var(--w7-el-bg);
+  color: var(--w7-el-c);
+  padding: 0 5px;
+}
+
+#widget_st_musik_duration_wrapper {
+  justify-self: end;
+  align-self: center;
+}
+
+#widget_st_musik_duration {
+  white-space: nowrap;
+  font-size: 12px;
+  max-width: 85px;
+  text-overflow: ellipsis;
+  display: block;
+  overflow: hidden;
+}
+
+#widget_st_musik_track_wrapper {
+  width: 100%;
+  height: 100%;
+
+  span {
+    font-size: 12px;
+  }
+}
+
+#widget_st_musik_track {
+  display: block;
+  margin: 5px 0;
+  max-width: 145px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#widget_st_musik_middle {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+#widget_st_musik_bottom {
+  margin-top: 5px;
+}
+
+#widget_st_musik_list {
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+  overflow: auto;
+}
+
+#widget_st_musik_list button {
+  background: var(--w7-surface);
+  border: none;
+  border-radius: 0;
+  text-align: left;
+  padding: 5px;
+  box-shadow: none;
+}
+
+#widget_st_musik_list button:hover {
+  background: var(--w7-li-bg-hl);
+  border: 1px solid var(--w7-li-bd-hl);
+}
+
+#widget_st_musik_list button:active {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#widget_st_musik_list.list_hidden {
+  display: none;
+}
