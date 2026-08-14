@@ -1,26 +1,31 @@
-<div id="widget_st_musik" class="card">
-  <div class="card-header">
-    <span>Musik <span id="now_playing"></span></span>
+<div id="widget_st_musik" class="widget_st_musik">
+  <div class="widget_st_musik_header">
+    <span>Musik <span id="widget_st_musik_now_playing"></span></span>
   </div>
-  <div class="card-body">
-    <div id="top">
-      <div id="track_wrapper">
-        <span id="track" />
+  <div class="widget_st_musik">
+    <div id="widget_st_musik_top">
+      <div id="widget_st_musik_track_wrapper">
+        <span id="widget_st_musik_track" />
       </div>
-      <div id="duration_wrapper">
-        <span id="duration">--:-- / --:--</span>
+      <div id="widget_st_musik_duration_wrapper">
+        <span id="widget_st_musik_duration">--:-- / --:--</span>
       </div>
     </div>
-    <div id="middle">
-      <button class="btn" id="btn_previous_track">⏮</button>
-      <button class="btn" id="btn_rewind" disabled>⏴</button>
-      <button class="btn btn_primary" id="btn_play">⏯</button>
-      <button class="btn" id="btn_forward" disabled>⏵</button>
-      <button class="btn" id="btn_next_track">⏭</button>
+    <div id="widget_st_musik_middle">
+      <button id="widget_st_musik_btn_previous_track">⏮</button>
+      <button id="widget_st_musik_btn_rewind" disabled>⏴</button>
+      <button class="btn_primary" id="widget_st_musik_btn_play">⏯</button>
+      <button id="widget_st_musik_btn_forward" disabled>⏵</button>
+      <button id="widget_st_musik_btn_next_track">⏭</button>
     </div>
-    <div id="bottom">
-      <button class="btn" id="list_btn">Expand Track List</button>
-      <div class="card-body list_hidden" id="list" />
+    <div id="widget_st_musik_bottom">
+      <button id="widget_st_musik_list_btn" class="widget_st_musik_list_btn">
+        Expand Track List
+      </button>
+      <div
+        class="widget_st_musik_card_body list_hidden"
+        id="widget_st_musik_list"
+      />
     </div>
   </div>
 </div>

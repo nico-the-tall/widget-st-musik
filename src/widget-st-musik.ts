@@ -1,5 +1,4 @@
-import css from "./style.css?inline";
-import win95 from "./win95.css?inline";
+import win95Theme from "./themes/win95.css?inline";
 import markup from "./widget-st-musik.html?raw";
 
 let tracks: string[] = [];
@@ -43,7 +42,7 @@ function initialize() {
     const shadow = container.attachShadow({ mode: "open" });
 
     const style = document.createElement("style");
-    style.textContent = css + win95;
+    style.textContent = win95Theme;
 
     shadow.appendChild(style);
 
@@ -54,7 +53,7 @@ function initialize() {
     shadow.appendChild(audio);
 
     player = container.shadowRoot;
-    listEl = player!.querySelector("#list");
+    listEl = player!.querySelector("#widget_st_musik_list");
   } catch {
     console.error(
       'Could not initialize Musik. Ensure a <div> with id "widget_st_musik" exists on your site.',
@@ -63,8 +62,8 @@ function initialize() {
 }
 
 function initializePlayer() {
-  trackEl = player!.querySelector("#track")!;
-  durationEl = player!.querySelector("#duration")!;
+  trackEl = player!.querySelector("#widget_st_musik_track")!;
+  durationEl = player!.querySelector("#widget_st_musik_duration")!;
   trackEl.textContent = "No track selected";
 }
 
@@ -106,12 +105,12 @@ function attachEvents() {
     btnNextTrack,
     btnList,
   ]: HTMLButtonElement[] = [
-    player!.querySelector("#btn_previous_track")!,
-    player!.querySelector("#btn_rewind")!,
-    player!.querySelector("#btn_play")!,
-    player!.querySelector("#btn_forward")!,
-    player!.querySelector("#btn_next_track")!,
-    player!.querySelector("#list_btn")!,
+    player!.querySelector("#widget_st_musik_btn_previous_track")!,
+    player!.querySelector("#widget_st_musik_btn_rewind")!,
+    player!.querySelector("#widget_st_musik_btn_play")!,
+    player!.querySelector("#widget_st_musik_btn_forward")!,
+    player!.querySelector("#widget_st_musik_btn_next_track")!,
+    player!.querySelector("#widget_st_musik_list_btn")!,
   ];
 
   btnList.addEventListener("click", () => {
@@ -140,6 +139,7 @@ function attachEvents() {
       if (currentTrackIndex === -1) {
         switchTrack("next");
       }
+      audio.play();
     } else {
       audio.pause();
     }

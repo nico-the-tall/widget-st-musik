@@ -1,0 +1,240 @@
+/*
+    Based off:
+
+    WIN95.CSS
+    https://github.com/AlexBSoft/win95.css
+    Author: Alex B (alex-b.me)
+    License: MIT
+
+    Version: 1.2.0
+    06.12.2020
+
+*/
+
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-button:end:increment,
+::-webkit-scrollbar-button:start:decrement {
+  display: block;
+}
+::-webkit-scrollbar-track {
+  background-color: var(--color-track, #ddd);
+}
+
+::-webkit-scrollbar-button:vertical:end:decrement,
+::-webkit-scrollbar-button:vertical:start:increment {
+  display: none;
+}
+::-webkit-scrollbar-button:vertical:increment,
+::-webkit-scrollbar-button:vertical:decrement {
+  margin: 1px 1px 1px 10px;
+  border: 1px outset var(--color-w, #fff);
+}
+::-webkit-scrollbar-button:vertical:increment {
+  width: 18px;
+  height: 18px;
+  background: var(--color-w2, silver) url(combo.png) no-repeat 50%;
+  transform: rotateY(-90deg);
+  -webkit-transform: rotateY(-90deg);
+}
+::-webkit-scrollbar-button:vertical:decrement {
+  width: 11px;
+  height: 16px;
+  background: var(--color-w2, silver) url(comboup.png) no-repeat 50%;
+  transform: rotateX(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+::-webkit-scrollbar-thumb:vertical {
+  border: 1px outset var(--color-w, #fff);
+  height: 40px;
+  background-color: var(--color-w2, silver);
+}
+
+::-webkit-scrollbar-button:horizontal:end:decrement,
+::-webkit-scrollbar-button:horizontal:start:increment {
+  display: none;
+}
+::-webkit-scrollbar-button:horizontal:decrement,
+::-webkit-scrollbar-button:horizontal:increment {
+  width: 18px;
+  height: 18px;
+  margin: 1px 1px 1px 10px;
+  border: 1px outset var(--color-w, #fff);
+}
+::-webkit-scrollbar-button:horizontal:increment {
+  background: var(--color-w2, silver) url(comboright.png) no-repeat 50%;
+  transform: rotateY(-90deg);
+  -webkit-transform: rotateY(-90deg);
+}
+::-webkit-scrollbar-button:horizontal:decrement {
+  background: var(--color-w2, silver) url(comboleft.png) no-repeat 50%;
+  transform: rotateX(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+::-webkit-scrollbar-track-piece {
+  margin: 1px;
+}
+::-webkit-scrollbar-thumb:horizontal {
+  border: 1px outset var(--color-w, #fff);
+  height: 40px;
+  background-color: var(--color-w2, silver);
+}
+
+/* ----- */
+
+.widget_st_musik {
+  font-family: "MS Sans Serif", Tahoma, Verdana, Segoe, sans-serif;
+  --color-k: #000000;
+  --color-w: #ffffff;
+  --color-w2: silver;
+  --color-gr: #676565;
+  --color-gr2: #c6b5c1;
+  --color-dark: #424242;
+  --color-text: #212529;
+  --color-track: #ddd;
+  --color-disabled: grey;
+  --color-list-bg: #eee;
+  --color-list-hover: #ccc;
+  --font-sm: 12px;
+  max-width: 250px;
+
+  border: solid;
+  border-width: 2px;
+  border-bottom-color: var(--color-dark);
+  border-right-color: var(--color-dark);
+  border-left-color: var(--color-w);
+  border-top-color: var(--color-w);
+  background: var(--color-w2);
+  color: var(--color-text);
+}
+
+.widget_st_musik button {
+  border-width: 1px;
+  border-style: outset;
+  border-color: buttonface;
+  border-right-color: var(--color-dark);
+  border-bottom-color: var(--color-dark);
+  background: var(--color-w2);
+  color: var(--color-k);
+  padding: 0 0 4px;
+  border-radius: 1px;
+  width: 100%;
+}
+
+.widget_st_musik button:hover {
+  color: var(--color-dark);
+  box-shadow: -1px -1px var(--color-k);
+}
+
+.widget_st_musik button:active:not(.btn_primary, :disabled),
+.widget_st_musik .btn_controlled {
+  border: 2px inset var(--color-w) !important;
+  color: var(--color-dark);
+  box-shadow: -1px -1px var(--color-k) !important;
+  outline: 0 !important;
+}
+
+.widget_st_musik button:focus {
+  outline: 1px dotted;
+}
+
+.widget_st_musik button:disabled {
+  cursor: default;
+  color: var(--color-disabled);
+  text-shadow: 1px 1px var(--color-w);
+}
+
+.widget_st_musik_header {
+  background: linear-gradient(
+    90deg,
+    var(--color-gr) 25%,
+    var(--color-gr2) 75%,
+    var(--color-w) 100%
+  );
+  color: var(--color-w);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 5px;
+  text-align: left;
+  border-radius: 0px;
+}
+
+#widget_st_musik_top {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: auto 90px;
+  align-items: center;
+  background-color: var(--color-k);
+  color: var(--color-w);
+  padding: 0 5px;
+}
+
+#widget_st_musik_duration_wrapper {
+  justify-self: end;
+  align-self: center;
+}
+
+#widget_st_musik_duration {
+  white-space: nowrap;
+  font-size: var(--font-sm);
+  max-width: 85px;
+  text-overflow: ellipsis;
+  display: block;
+  overflow: hidden;
+}
+
+#widget_st_musik_track_wrapper {
+  width: 100%;
+  height: 100%;
+
+  span {
+    font-size: var(--font-sm);
+  }
+}
+
+#widget_st_musik_track {
+  display: block;
+  margin: 5px 0;
+  max-width: 145px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#widget_st_musik_middle {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+#widget_st_musik_list {
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+  overflow: auto;
+}
+
+#widget_st_musik_list button {
+  background: var(--color-list-bg);
+  border: none;
+  border-radius: 0;
+  text-align: left;
+  padding: 5px;
+  box-shadow: none;
+}
+
+#widget_st_musik_list button:hover {
+  background-color: var(--color-list-hover);
+  border: none;
+}
+
+#widget_st_musik_list button:active {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#widget_st_musik_list.list_hidden {
+  display: none;
+}
