@@ -172,6 +172,10 @@ function attachEvents() {
   audio.addEventListener("loadedmetadata", () => {
     durationEl!.textContent = `00:00 / ${formatTime(audio.duration)}`;
   });
+
+  audio.addEventListener("ended", () => {
+    switchTrack("next");
+  });
 }
 
 (async () => {
