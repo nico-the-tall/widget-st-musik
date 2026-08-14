@@ -1,0 +1,23 @@
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: CI
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.18.0"
+      - name: Install pnpm
+        run: npm install -g pnpm@11.13.0
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Check tsc
+        run: pnpm run ci:ts
+      - name: Lint
+        run: pnpm run ci:lint
+      - name: Check formatting
+        run: pnpm run ci:format
