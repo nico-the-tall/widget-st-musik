@@ -21,11 +21,17 @@ let trackEl: HTMLSpanElement | null = null;
 let durationEl: HTMLSpanElement | null = null;
 let listEl: HTMLDivElement | null = null;
 
+function playAudio() {
+  audio.play().catch((error) => {
+    console.error("Could not play track:", error);
+  });
+}
+
 function setTrack() {
   const track = tracks[currentTrackIndex];
   audio.src = `tracks/${track}`;
   trackEl!.textContent = track;
-  audio.play();
+  playAudio();
 
   player!
     .querySelector("#widget_st_musik_top")
@@ -38,6 +44,10 @@ function switchTrackToIndex(index: number) {
 }
 
 function switchTrack(direction: "prev" | "next") {
+  if (tracks.length === 0) {
+    return;
+  }
+
   if (direction === "prev") {
     if (currentTrackIndex < 0) {
       currentTrackIndex = tracks.length - 1;
@@ -90,10 +100,14 @@ function initialize() {
 
     player = container.shadowRoot;
     listEl = player!.querySelector("#widget_st_musik_list");
+
+    return true;
   } catch {
     console.error(
       'Could not initialize Musik. Ensure a <div> with id "widget_st_musik" exists on your site.',
     );
+
+    return false;
   }
 }
 
@@ -108,7 +122,10 @@ async function getTracks() {
     const res = await fetch("/tracks/manifest.txt");
     const raw = await res.text();
 
-    tracks = raw.split("\n");
+    tracks = raw
+      .split("\n")
+      .map((track) => track.trim())
+      .filter(Boolean);
 
     tracks.forEach((track, index) => {
       const btn = document.createElement("button");
@@ -175,7 +192,7 @@ function attachEvents() {
       if (currentTrackIndex === -1) {
         switchTrack("next");
       }
-      audio.play();
+      playAudio();
     } else {
       audio.pause();
     }
@@ -215,7 +232,10 @@ function attachEvents() {
 }
 
 (async () => {
-  initialize();
+  if (!initialize()) {
+    return;
+  }
+
   initializePlayer();
   await getTracks();
   attachEvents();
