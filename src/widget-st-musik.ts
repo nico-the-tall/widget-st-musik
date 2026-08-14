@@ -13,6 +13,8 @@ const themes = Object.fromEntries(
   ]),
 );
 
+const currentScript = document.currentScript as HTMLScriptElement | null;
+
 let tracks: string[] = [];
 let currentTrackIndex = -1;
 let player: ShadowRoot | null = null;
@@ -64,27 +66,42 @@ function switchTrack(direction: "prev" | "next") {
 
 function initialize() {
   try {
-    const container = document.querySelector("#widget_st_musik")!;
+    const container = currentScript!.parentElement!;
     const shadow = container.attachShadow({ mode: "open" });
+
+    let settings: Record<string, unknown> = {};
+
+    try {
+      if (currentScript!.dataset.settings) {
+        settings = JSON.parse(
+          decodeURIComponent(currentScript!.dataset.settings),
+        );
+      }
+    } catch {
+      console.error("Could not parse widget settings. Using defaults.");
+    }
 
     const style = document.createElement("style");
 
-    const builtInThemeName = container.getAttribute("data-theme") ?? "win95";
-    const builtInTheme = themes[builtInThemeName];
+    const builtInThemeName = settings.theme ?? "win95";
 
-    if (builtInTheme) {
-      style.textContent = builtInTheme;
-    } else {
-      console.error(
-        "The selected theme for widget_st_musik does not exist. Please verify the name.",
-      );
+    if (builtInThemeName !== "none") {
+      const builtInTheme = themes[builtInThemeName as string];
+
+      if (builtInTheme) {
+        style.textContent = builtInTheme;
+      } else {
+        console.error(
+          "The selected theme for widget_st_musik does not exist. Please verify the name.",
+        );
+      }
     }
 
     shadow.appendChild(style);
 
-    const customStylesheetHref = container.getAttribute("data-stylesheet-href");
+    const customStylesheetHref = settings["stylesheet_href"];
 
-    if (customStylesheetHref) {
+    if (typeof customStylesheetHref === "string" && customStylesheetHref) {
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = customStylesheetHref;
@@ -104,7 +121,7 @@ function initialize() {
     return true;
   } catch {
     console.error(
-      'Could not initialize Musik. Ensure a <div> with id "widget_st_musik" exists on your site.',
+      "Could not initialize Musik. Ensure the widget script tag is embedded correctly.",
     );
 
     return false;
