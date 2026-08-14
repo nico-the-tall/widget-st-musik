@@ -1,14 +1,13 @@
 /*
-    Modified from:
+  Modified from:
 
-    WIN95.CSS
-    https://github.com/AlexBSoft/win95.css
-    Author: Alex B (alex-b.me)
-    License: MIT
+  WIN95.CSS
+  https://github.com/AlexBSoft/win95.css
+  Author: Alex B (alex-b.me)
+  License: MIT
 
-    Version: 1.2.0
-    06.12.2020
-
+  Version: 1.2.0
+  06.12.2020
 */
 
 ::-webkit-scrollbar {
@@ -97,7 +96,7 @@
   --color-list-bg: #eee;
   --color-list-hover: #ccc;
   --font-sm: 12px;
-  max-width: 250px;
+  width: 300px;
 
   border: solid;
   border-width: 2px;
@@ -107,6 +106,10 @@
   border-top-color: var(--color-w);
   background: var(--color-w2);
   color: var(--color-text);
+}
+
+.widget_st_musik div {
+  box-sizing: border-box;
 }
 
 .widget_st_musik button {
