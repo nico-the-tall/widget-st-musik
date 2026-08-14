@@ -26,6 +26,10 @@ function setTrack() {
   audio.src = `tracks/${track}`;
   trackEl!.textContent = track;
   audio.play();
+
+  player!
+    .querySelector("#widget_st_musik_top")
+    ?.setAttribute("title", tracks[currentTrackIndex]);
 }
 
 function switchTrackToIndex(index: number) {
