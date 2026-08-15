@@ -6,12 +6,26 @@
     <title>widget-st-musik — live preview</title>
   </head>
   <body>
-    <p>Loading the deployed script from https://nico.gay/widget_st_musik.js</p>
+    <h1>Style isolation</h1>
+    <button tabindex="0">Focus</button>
+    <hr />
+    <div>
+      <script
+        src="./widget-st-musik.js"
+        data-settings="%7B%22theme%22%3A%22brutalist%22%2C%22autoplay%22%3Afalse%7D"
+      ></script>
+    </div>
+    <hr />
     <div>
       <script
         src="https://nico.gay/widget_st_musik.js"
-        data-settings="%7B%22theme%22%3A%22brutalist%22%2C%22autoplay%22%3Atrue%7D"
+        data-settings="%7B%22theme%22%3A%22brutalist%22%2C%22autoplay%22%false%7D"
       ></script>
     </div>
+
+    <hr />
+
+    <script src="https://u.widget.st/ar.js"></script>
+    <ws-widget type="musik" iid="5224" embed="script"></ws-widget>
   </body>
 </html>
