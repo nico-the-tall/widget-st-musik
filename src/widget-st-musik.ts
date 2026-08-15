@@ -1,5 +1,11 @@
 import markup from "./widget-st-musik.html?raw";
 
+interface Settings {
+  theme?: string;
+  stylesheet_href?: string;
+  autoplay?: boolean;
+}
+
 const themeModules = import.meta.glob<string>("./themes/*.css", {
   eager: true,
   query: "?inline",
@@ -22,27 +28,33 @@ const audio = document.createElement("audio");
 let trackEl: HTMLSpanElement | null = null;
 let durationEl: HTMLSpanElement | null = null;
 let listEl: HTMLDivElement | null = null;
+let settings: Settings = {};
 
 function playAudio() {
-  audio.play().catch((error) => {
-    console.error("Could not play track:", error);
-  });
+  return audio.play().then(
+    () => true,
+    (error) => {
+      console.error("Could not play track:", error);
+      return false;
+    },
+  );
 }
 
 function setTrack() {
   const track = tracks[currentTrackIndex];
   audio.src = `tracks/${track}`;
   trackEl!.textContent = track;
-  playAudio();
 
   player!
     .querySelector("#widget_st_musik_top")
     ?.setAttribute("title", tracks[currentTrackIndex]);
+
+  return playAudio();
 }
 
 function switchTrackToIndex(index: number) {
   currentTrackIndex = index;
-  setTrack();
+  return setTrack();
 }
 
 function switchTrack(direction: "prev" | "next") {
@@ -61,15 +73,13 @@ function switchTrack(direction: "prev" | "next") {
     currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
   }
 
-  setTrack();
+  return setTrack();
 }
 
 function initialize() {
   try {
     const container = currentScript!.parentElement!;
     const shadow = container.attachShadow({ mode: "open" });
-
-    let settings: Record<string, unknown> = {};
 
     try {
       if (currentScript!.dataset.settings) {
@@ -256,4 +266,21 @@ function attachEvents() {
   initializePlayer();
   await getTracks();
   attachEvents();
+
+  if (settings.autoplay) {
+    switchTrackToIndex(0).then((played) => {
+      if (played) {
+        return;
+      }
+
+      function retryAutoplay() {
+        if (audio.paused) {
+          playAudio();
+        }
+      }
+
+      document.addEventListener("click", retryAutoplay, { once: true });
+      document.addEventListener("keydown", retryAutoplay, { once: true });
+    });
+  }
 })();
