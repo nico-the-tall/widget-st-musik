@@ -274,13 +274,16 @@ function attachEvents() {
       }
 
       function retryAutoplay() {
+        document.removeEventListener("click", retryAutoplay);
+        document.removeEventListener("keydown", retryAutoplay);
+
         if (audio.paused) {
           playAudio();
         }
       }
 
-      document.addEventListener("click", retryAutoplay, { once: true });
-      document.addEventListener("keydown", retryAutoplay, { once: true });
+      document.addEventListener("click", retryAutoplay);
+      document.addEventListener("keydown", retryAutoplay);
     });
   }
 })();
