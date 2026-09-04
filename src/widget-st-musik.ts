@@ -21,6 +21,8 @@ const themes = Object.fromEntries(
 
 const currentScript = document.currentScript as HTMLScriptElement | null;
 
+const tracksBaseUrl = new URL("/tracks/", document.baseURI);
+
 let tracks: string[] = [];
 let currentTrackIndex = -1;
 let player: ShadowRoot | null = null;
@@ -42,7 +44,7 @@ function playAudio() {
 
 function setTrack() {
   const track = tracks[currentTrackIndex];
-  audio.src = `tracks/${track}`;
+  audio.src = new URL(track, tracksBaseUrl).href;
   trackEl!.textContent = track;
 
   player!
@@ -146,7 +148,7 @@ function initializePlayer() {
 
 async function getTracks() {
   try {
-    const res = await fetch("/tracks/manifest.txt");
+    const res = await fetch(new URL("manifest.txt", tracksBaseUrl));
     const raw = await res.text();
 
     tracks = raw
