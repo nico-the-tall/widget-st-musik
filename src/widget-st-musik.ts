@@ -4,6 +4,7 @@ interface Settings {
   theme?: string;
   stylesheet_href?: string;
   autoplay?: boolean;
+  randomize?: boolean;
 }
 
 const themeModules = import.meta.glob<string>("./themes/*.css", {
@@ -25,12 +26,25 @@ const tracksBaseUrl = new URL("/tracks/", document.baseURI);
 
 let tracks: string[] = [];
 let currentTrackIndex = -1;
+let playOrder: number[] = [];
+let playOrderPos = -1;
 let player: ShadowRoot | null = null;
 const audio = document.createElement("audio");
 let trackEl: HTMLSpanElement | null = null;
 let durationEl: HTMLSpanElement | null = null;
 let listEl: HTMLDivElement | null = null;
 let settings: Settings = {};
+
+function shufflePlayOrder() {
+  playOrder = tracks.map((_, index) => index);
+
+  for (let i = playOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [playOrder[i], playOrder[j]] = [playOrder[j], playOrder[i]];
+  }
+
+  playOrderPos = -1;
+}
 
 function playAudio() {
   return audio.play().then(
@@ -56,6 +70,11 @@ function setTrack() {
 
 function switchTrackToIndex(index: number) {
   currentTrackIndex = index;
+
+  if (settings.randomize) {
+    playOrderPos = playOrder.indexOf(index);
+  }
+
   return setTrack();
 }
 
@@ -64,7 +83,23 @@ function switchTrack(direction: "prev" | "next") {
     return;
   }
 
-  if (direction === "prev") {
+  if (settings.randomize) {
+    if (playOrder.length !== tracks.length) {
+      shufflePlayOrder();
+    }
+
+    if (direction === "prev") {
+      playOrderPos =
+        playOrderPos <= 0 ? playOrder.length - 1 : playOrderPos - 1;
+    } else {
+      if (playOrderPos >= playOrder.length - 1) {
+        shufflePlayOrder();
+      }
+      playOrderPos += 1;
+    }
+
+    currentTrackIndex = playOrder[playOrderPos];
+  } else if (direction === "prev") {
     if (currentTrackIndex < 0) {
       currentTrackIndex = tracks.length - 1;
     } else {
@@ -269,8 +304,14 @@ function attachEvents() {
   await getTracks();
   attachEvents();
 
+  if (settings.randomize && tracks.length > 0) {
+    shufflePlayOrder();
+  }
+
   if (settings.autoplay) {
-    switchTrackToIndex(0).then((played) => {
+    const startIndex = settings.randomize ? playOrder[0] : 0;
+
+    switchTrackToIndex(startIndex).then((played) => {
       if (played) {
         return;
       }
