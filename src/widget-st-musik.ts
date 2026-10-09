@@ -184,6 +184,11 @@ function initializePlayer() {
 async function getTracks() {
   try {
     const res = await fetch(new URL("manifest.txt", tracksBaseUrl));
+
+    if (!res.ok) {
+      throw new Error(`manifest.txt responded with ${res.status}`);
+    }
+
     const raw = await res.text();
 
     tracks = raw
@@ -198,9 +203,21 @@ async function getTracks() {
 
       listEl!.appendChild(btn);
     });
+
+    return true;
   } catch {
     console.error("Could not fetch or process manifest.txt");
+
+    return false;
   }
+}
+
+function disablePlayer() {
+  trackEl!.textContent = "Manifest missing!";
+
+  player!.querySelectorAll("button").forEach((btn) => {
+    btn.disabled = true;
+  });
 }
 
 function formatTime(time: number) {
@@ -301,7 +318,12 @@ function attachEvents() {
   }
 
   initializePlayer();
-  await getTracks();
+
+  if (!(await getTracks())) {
+    disablePlayer();
+    return;
+  }
+
   attachEvents();
 
   if (settings.randomize && tracks.length > 0) {
