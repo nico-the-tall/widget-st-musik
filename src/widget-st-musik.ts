@@ -21,7 +21,10 @@ const themes = Object.fromEntries(
   ]),
 );
 
-const currentScript = document.currentScript as HTMLScriptElement | null;
+const currentScript = (document.currentScript ??
+  document.querySelector(
+    'script[src*="widget-st-musik"]',
+  )) as HTMLScriptElement | null;
 
 const tracksBaseUrl = new URL("/tracks/", document.baseURI);
 

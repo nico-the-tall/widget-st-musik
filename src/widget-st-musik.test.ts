@@ -12,6 +12,7 @@ interface MountOptions {
   fetchError?: boolean;
   playRejects?: boolean;
   withoutScript?: boolean;
+  scriptSrc?: string;
 }
 
 interface MediaState {
@@ -94,6 +95,7 @@ async function mountWidget(options: MountOptions = {}) {
     fetchError = false,
     playRejects = false,
     withoutScript = false,
+    scriptSrc,
   } = options;
 
   playShouldReject = playRejects;
@@ -119,6 +121,10 @@ async function mountWidget(options: MountOptions = {}) {
     script.dataset.settings = rawSettings;
   } else if (settings) {
     script.dataset.settings = encodeURIComponent(JSON.stringify(settings));
+  }
+
+  if (scriptSrc) {
+    script.setAttribute("src", scriptSrc);
   }
 
   container.appendChild(script);
@@ -199,6 +205,18 @@ describe("initialization", () => {
     expect(consoleError).toHaveBeenCalledWith(
       expect.stringContaining("Could not initialize Musik"),
     );
+  });
+
+  it("finds its script tag by src when there is no current script", async () => {
+    const { shadow, listButtons } = await mountWidget({
+      withoutScript: true,
+      scriptSrc: "/src/widget-st-musik.ts",
+      settings: { secondaryBar: true },
+    });
+
+    expect(shadow).not.toBeNull();
+    expect(shadow.querySelector("#widget_st_musik_secondary")).not.toBeNull();
+    expect(listButtons()).toHaveLength(3);
   });
 
   it("falls back to defaults when settings are not valid JSON", async () => {
@@ -421,17 +439,6 @@ describe("playback controls", () => {
     expect(currentTrack()).toBe("b.mp3");
   });
 
-  it("encodes track names into the audio URL", async () => {
-    const { button, audio, trackText } = await mountWidget({
-      manifest: "My Song #1.mp3\n",
-    });
-
-    button("play").click();
-
-    expect(trackText()).toBe("My Song #1.mp3");
-    expect(audio.src).toBe(trackUrl("My%20Song%20%231.mp3"));
-  });
-
   it("does nothing on next or previous when the manifest has no tracks", async () => {
     const { button, audio, trackText } = await mountWidget({
       manifest: "\n  \n",
@@ -454,6 +461,78 @@ describe("playback controls", () => {
     expect(consoleError).toHaveBeenCalledWith(
       "Could not play track:",
       expect.any(DOMException),
+    );
+  });
+});
+
+describe("track URLs", () => {
+  const origin = () => new URL(document.baseURI).origin;
+
+  async function resolve(line: string) {
+    const { listButtons, audio, trackText } = await mountWidget({
+      manifest: `${line}\n`,
+    });
+
+    listButtons()[0].click();
+    expect(trackText()).toBe(line);
+
+    return audio.src;
+  }
+
+  it.each([
+    ["plain.mp3", "/tracks/plain.mp3"],
+    ["My Song.mp3", "/tracks/My%20Song.mp3"],
+    [
+      "café ♪ 日本.mp3",
+      "/tracks/caf%C3%A9%20%E2%99%AA%20%E6%97%A5%E6%9C%AC.mp3",
+    ],
+    ["Don't Stop!.mp3", "/tracks/Don't%20Stop!.mp3"],
+    [
+      "(feat. X) [Remix] {v2}.mp3",
+      "/tracks/(feat.%20X)%20[Remix]%20%7Bv2%7D.mp3",
+    ],
+    ["a+b=c&d.mp3", "/tracks/a+b=c&d.mp3"],
+    ["a,b;c@d$e.mp3", "/tracks/a,b;c@d$e.mp3"],
+    ["tilde~star*caret^pipe|.mp3", "/tracks/tilde~star*caret%5Epipe|.mp3"],
+    ['quote"lt<gt>.mp3', "/tracks/quote%22lt%3Cgt%3E.mp3"],
+    ["back`tick.mp3", "/tracks/back%60tick.mp3"],
+    ["Track 1: Intro.mp3", "/tracks/Track%201:%20Intro.mp3"],
+    [".hidden.mp3", "/tracks/.hidden.mp3"],
+    ["trailing dot..mp3", "/tracks/trailing%20dot..mp3"],
+  ])("supports the filename %s", async (line, path) => {
+    expect(await resolve(line)).toBe(origin() + path);
+  });
+
+  it.each([
+    ["pre-encoded names", "My%20Song.mp3", "/tracks/My%20Song.mp3"],
+    ["subfolders", "live/set.mp3", "/tracks/live/set.mp3"],
+    ["backslash subfolders", "live\\set.mp3", "/tracks/live/set.mp3"],
+    ["dot segments", "./a.mp3", "/tracks/a.mp3"],
+    ["parent folders", "../a.mp3", "/a.mp3"],
+    ["root-relative paths", "/other/a.mp3", "/other/a.mp3"],
+    ["query strings", "a.mp3?v=2", "/tracks/a.mp3?v=2"],
+    ["media fragments", "a.mp3#t=30", "/tracks/a.mp3#t=30"],
+  ])("supports %s", async (_, line, path) => {
+    expect(await resolve(line)).toBe(origin() + path);
+  });
+
+  it.each([
+    ["a CDN URL", "https://cdn.example.com/music/a.mp3"],
+    [
+      "a signed CDN URL",
+      "https://cdn.example.com/a.mp3?token=abc%2F123&expires=1700000000",
+    ],
+    ["an http URL", "http://cdn.example.com/a.mp3"],
+    ["a data URL", "data:audio/mpeg;base64,SUQz"],
+  ])("plays %s as-is", async (_, url) => {
+    expect(await resolve(url)).toBe(url);
+  });
+
+  it("resolves protocol-relative URLs against the page protocol", async () => {
+    const protocol = new URL(document.baseURI).protocol;
+
+    expect(await resolve("//cdn.example.com/a.mp3")).toBe(
+      `${protocol}//cdn.example.com/a.mp3`,
     );
   });
 });
