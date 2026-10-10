@@ -807,6 +807,17 @@ describe("secondary bar", () => {
   });
 
   describe("repeat", () => {
+    it("shows an icon with an accessible label", async () => {
+      const { button } = await mountWidget({
+        settings: { secondaryBar: true },
+      });
+      const repeat = button("repeat");
+
+      expect(repeat.getAttribute("aria-label")).toBe("Repeat");
+      expect(repeat.querySelector("svg")).not.toBeNull();
+      expect(repeat.querySelector("img")).toBeNull();
+    });
+
     it("toggles looping of the current track", async () => {
       const { button, audio } = await mountWidget({
         settings: { secondaryBar: true },
@@ -836,6 +847,140 @@ describe("secondary bar", () => {
       button("next_track").click();
 
       expect(audio.loop).toBe(true);
+    });
+  });
+
+  describe("shuffle", () => {
+    const manifest = "a.mp3\nb.mp3\nc.mp3\nd.mp3\n";
+    const shuffled = ["b.mp3", "c.mp3", "d.mp3", "a.mp3"];
+
+    beforeEach(() => {
+      vi.spyOn(Math, "random").mockReturnValue(0);
+    });
+
+    function isPressed(btn: HTMLButtonElement) {
+      return (
+        btn.classList.contains("btn_controlled") &&
+        btn.getAttribute("aria-pressed") === "true"
+      );
+    }
+
+    it("shows an icon with an accessible label", async () => {
+      const { button } = await mountWidget({
+        settings: { secondaryBar: true },
+      });
+      const shuffle = button("shuffle");
+
+      expect(shuffle.getAttribute("aria-label")).toBe("Shuffle");
+      expect(shuffle.querySelector("svg")).not.toBeNull();
+    });
+
+    it("is not pressed when randomize is off", async () => {
+      const { button } = await mountWidget({
+        settings: { secondaryBar: true },
+      });
+
+      expect(isPressed(button("shuffle"))).toBe(false);
+      expect(button("shuffle").getAttribute("aria-pressed")).toBe("false");
+    });
+
+    it("is pressed when randomize is on", async () => {
+      const { button } = await mountWidget({
+        settings: { secondaryBar: true, randomize: true },
+      });
+
+      expect(isPressed(button("shuffle"))).toBe(true);
+    });
+
+    it("toggles its pressed state", async () => {
+      const { button } = await mountWidget({
+        settings: { secondaryBar: true },
+      });
+
+      button("shuffle").click();
+      expect(isPressed(button("shuffle"))).toBe(true);
+
+      button("shuffle").click();
+      expect(isPressed(button("shuffle"))).toBe(false);
+    });
+
+    it("plays in shuffled order after turning it on", async () => {
+      const { button, currentTrack } = await mountWidget({
+        manifest,
+        settings: { secondaryBar: true },
+      });
+
+      button("shuffle").click();
+
+      const seen = [];
+      for (let i = 0; i < 4; i++) {
+        button("next_track").click();
+        seen.push(currentTrack());
+      }
+
+      expect(seen).toEqual(shuffled);
+    });
+
+    it("keeps the current track playing when turned on", async () => {
+      const { button, audio, currentTrack } = await mountWidget({
+        manifest,
+        settings: { secondaryBar: true },
+      });
+
+      button("next_track").click();
+      button("next_track").click();
+      button("shuffle").click();
+
+      expect(currentTrack()).toBe("b.mp3");
+      expect(audio.paused).toBe(false);
+      expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(2);
+    });
+
+    it("starts a fresh shuffled order each time it is turned on", async () => {
+      const { button, currentTrack } = await mountWidget({
+        manifest,
+        settings: { secondaryBar: true, randomize: true },
+      });
+
+      button("next_track").click();
+      button("next_track").click();
+      expect(currentTrack()).toBe(shuffled[1]);
+
+      button("shuffle").click();
+      button("shuffle").click();
+      button("next_track").click();
+
+      expect(currentTrack()).toBe(shuffled[0]);
+    });
+
+    it("returns to list order from the current track when turned off", async () => {
+      const { button, currentTrack } = await mountWidget({
+        manifest,
+        settings: { secondaryBar: true, randomize: true },
+      });
+
+      button("next_track").click();
+      expect(currentTrack()).toBe("b.mp3");
+
+      button("shuffle").click();
+      button("next_track").click();
+      expect(currentTrack()).toBe("c.mp3");
+
+      button("previous_track").click();
+      button("previous_track").click();
+      expect(currentTrack()).toBe("a.mp3");
+    });
+
+    it("plays the first track of the new order when play is pressed", async () => {
+      const { button, currentTrack } = await mountWidget({
+        manifest,
+        settings: { secondaryBar: true },
+      });
+
+      button("shuffle").click();
+      button("play").click();
+
+      expect(currentTrack()).toBe(shuffled[0]);
     });
   });
 

@@ -234,13 +234,14 @@
   overflow: hidden;
 }
 
-#widget_st_musik_middle,
-#widget_st_musik_secondary {
+#widget_st_musik_middle {
   display: flex;
   justify-content: space-evenly;
 }
 
 #widget_st_musik_secondary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
 }
 
@@ -248,10 +249,18 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  grid-column: span 3;
+  min-width: 0;
+
+  svg {
+    margin-bottom: -3px;
+    padding-left: 1px;
+  }
 }
 
-#widget_st_musik_bottom {
-  margin-top: 5px;
+#widget_st_musik_volume_slider {
+  flex: 1;
+  min-width: 0;
 }
 
 #widget_st_musik_list {
@@ -287,4 +296,9 @@
 
 #widget_st_musik_list.list_hidden {
   display: none;
+}
+
+#widget_st_musik_btn_repeat svg,
+#widget_st_musik_btn_shuffle svg {
+  margin-bottom: -3px;
 }

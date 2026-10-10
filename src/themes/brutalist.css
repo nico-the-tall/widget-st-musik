@@ -132,13 +132,14 @@
   overflow: hidden;
 }
 
-#widget_st_musik_middle,
-#widget_st_musik_secondary {
+#widget_st_musik_middle {
   display: flex;
   justify-content: space-evenly;
 }
 
 #widget_st_musik_secondary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
 }
 
@@ -146,10 +147,103 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  grid-column: span 3;
+  min-width: 0;
+
+  svg {
+    margin-bottom: -4px;
+    padding-left: 1px;
+  }
 }
 
-#widget_st_musik_bottom {
-  margin-top: 5px;
+#widget_st_musik_volume_slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  margin-right: 10%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+
+#widget_st_musik_volume_slider:focus {
+  outline: none;
+}
+
+#widget_st_musik_volume_slider:focus-visible {
+  outline: 2px dashed var(--color-fg);
+  outline-offset: 2px;
+}
+
+#widget_st_musik_volume_slider:disabled {
+  cursor: default;
+}
+
+#widget_st_musik_volume_slider::-webkit-slider-runnable-track {
+  height: 8px;
+  background: var(--color-bg);
+  border: 2px solid var(--color-fg);
+  border-radius: 0;
+}
+
+#widget_st_musik_volume_slider::-moz-range-track {
+  height: 8px;
+  background: var(--color-bg);
+  border: 2px solid var(--color-fg);
+  border-radius: 0;
+}
+
+#widget_st_musik_volume_slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -8px;
+  width: 12px;
+  height: 20px;
+  background: var(--color-hl);
+  border: 2px solid var(--color-fg);
+  border-radius: 0;
+  box-shadow: 1px 1px 0 var(--color-fg);
+}
+
+#widget_st_musik_volume_slider::-moz-range-thumb {
+  width: 12px;
+  height: 20px;
+  background: var(--color-hl);
+  border: 2px solid var(--color-fg);
+  border-radius: 0;
+  box-shadow: 1px 1px 0 var(--color-fg);
+}
+
+#widget_st_musik_volume_slider:hover:not(:disabled)::-webkit-slider-thumb {
+  box-shadow: 2px 2px 0 var(--color-fg);
+}
+
+#widget_st_musik_volume_slider:hover:not(:disabled)::-moz-range-thumb {
+  box-shadow: 2px 2px 0 var(--color-fg);
+}
+
+#widget_st_musik_volume_slider:active:not(:disabled)::-webkit-slider-thumb {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+#widget_st_musik_volume_slider:active:not(:disabled)::-moz-range-thumb {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+#widget_st_musik_volume_slider:disabled::-webkit-slider-thumb {
+  background: var(--color-bg);
+}
+
+#widget_st_musik_volume_slider:disabled::-moz-range-thumb {
+  background: var(--color-bg);
+}
+
+#widget_st_musik_btn_repeat svg,
+#widget_st_musik_btn_shuffle svg {
+  margin-bottom: -3px;
 }
 
 #widget_st_musik_list {

@@ -312,6 +312,30 @@ function attachEvents() {
     btnRepeat.setAttribute("aria-pressed", String(audio.loop));
   });
 
+  const btnShuffle = player!.querySelector<HTMLButtonElement>(
+    "#widget_st_musik_btn_shuffle",
+  );
+
+  function updateShuffleButton() {
+    const randomize = Boolean(settings.randomize);
+    btnShuffle!.classList.toggle("btn_controlled", randomize);
+    btnShuffle!.setAttribute("aria-pressed", String(randomize));
+  }
+
+  if (btnShuffle) {
+    updateShuffleButton();
+
+    btnShuffle.addEventListener("click", () => {
+      settings.randomize = !settings.randomize;
+
+      if (settings.randomize) {
+        shufflePlayOrder();
+      }
+
+      updateShuffleButton();
+    });
+  }
+
   const volumeSlider = player!.querySelector<HTMLInputElement>(
     "#widget_st_musik_volume_slider",
   );
