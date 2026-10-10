@@ -1,4 +1,5 @@
 export default {
+  appType: "mpa",
   build: {
     target: "es2015",
     sourcemap: true,

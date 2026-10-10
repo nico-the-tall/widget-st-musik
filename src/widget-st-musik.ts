@@ -189,6 +189,12 @@ async function getTracks() {
       throw new Error(`manifest.txt responded with ${res.status}`);
     }
 
+    const contentType = res.headers.get("content-type") ?? "";
+
+    if (/html|json/i.test(contentType)) {
+      throw new Error(`manifest.txt responded with ${contentType}`);
+    }
+
     const raw = await res.text();
 
     tracks = raw
