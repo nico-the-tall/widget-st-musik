@@ -21,3 +21,5 @@ jobs:
         run: pnpm run ci:lint
       - name: Check formatting
         run: pnpm run ci:format
+      - name: Test
+        run: pnpm run ci:test

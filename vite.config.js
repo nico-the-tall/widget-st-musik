@@ -10,4 +10,10 @@ export default {
       fileName: () => "widget-st-musik.js",
     },
   },
+  test: {
+    environment: "jsdom",
+    coverage: {
+      include: ["src/**/*.ts"],
+    },
+  },
 };
