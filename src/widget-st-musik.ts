@@ -5,6 +5,7 @@ interface Settings {
   stylesheet_href?: string;
   autoplay?: boolean;
   randomize?: boolean;
+  secondaryBar?: boolean;
 }
 
 const themeModules = import.meta.glob<string>("./themes/*.css", {
@@ -158,6 +159,11 @@ function initialize() {
 
     const root = document.createElement("div");
     root.innerHTML = markup;
+
+    if (!settings.secondaryBar) {
+      root.querySelector("#widget_st_musik_secondary")?.remove();
+    }
+
     shadow.appendChild(root);
 
     shadow.appendChild(audio);
@@ -221,8 +227,8 @@ async function getTracks() {
 function disablePlayer() {
   trackEl!.textContent = "Manifest missing!";
 
-  player!.querySelectorAll("button").forEach((btn) => {
-    btn.disabled = true;
+  player!.querySelectorAll("button, input").forEach((el) => {
+    (el as HTMLButtonElement | HTMLInputElement).disabled = true;
   });
 }
 
@@ -291,6 +297,24 @@ function attachEvents() {
 
   btnNextTrack.addEventListener("click", () => {
     switchTrack("next");
+  });
+
+  const btnRepeat = player!.querySelector<HTMLButtonElement>(
+    "#widget_st_musik_btn_repeat",
+  );
+
+  btnRepeat?.addEventListener("click", () => {
+    audio.loop = !audio.loop;
+    btnRepeat.classList.toggle("btn_controlled", audio.loop);
+    btnRepeat.setAttribute("aria-pressed", String(audio.loop));
+  });
+
+  const volumeSlider = player!.querySelector<HTMLInputElement>(
+    "#widget_st_musik_volume_slider",
+  );
+
+  volumeSlider?.addEventListener("input", () => {
+    audio.volume = Number(volumeSlider.value);
   });
 
   audio.addEventListener("play", () => {

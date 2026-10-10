@@ -132,9 +132,20 @@
   overflow: hidden;
 }
 
-#widget_st_musik_middle {
+#widget_st_musik_middle,
+#widget_st_musik_secondary {
   display: flex;
   justify-content: space-evenly;
+}
+
+#widget_st_musik_secondary {
+  align-items: center;
+}
+
+#widget_st_musik_volume {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 #widget_st_musik_bottom {
