@@ -464,6 +464,275 @@ describe("manifest loading", () => {
   });
 });
 
+describe("json manifest", () => {
+  const json = (data: unknown) => ({
+    manifest: JSON.stringify(data),
+    contentType: "application/json",
+    settings: { manifest: "json" },
+  });
+
+  const album = {
+    tracks: [
+      { src: "a.mp3", title: "Song A" },
+      { src: "b.mp3", title: "Song B" },
+      { src: "https://cdn.example.com/c.mp3", title: "Song C" },
+    ],
+  };
+
+  const fetchedUrl = (fetchMock: ReturnType<typeof vi.fn>) =>
+    String((fetchMock.mock.calls[0] as unknown[])[0]);
+
+  it("fetches manifest.json from the tracks folder", async () => {
+    const { fetchMock } = await mountWidget(json(album));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchedUrl(fetchMock)).toBe(trackUrl("manifest.json"));
+  });
+
+  it.each([{}, { manifest: "txt" }])(
+    "fetches manifest.txt with settings %j",
+    async (settings) => {
+      const { fetchMock } = await mountWidget({ settings });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchedUrl(fetchMock)).toBe(trackUrl("manifest.txt"));
+    },
+  );
+
+  it("falls back to manifest.txt for an unknown manifest setting", async () => {
+    const { fetchMock, listButtons } = await mountWidget({
+      settings: { manifest: "xml" },
+    });
+
+    expect(fetchedUrl(fetchMock)).toBe(trackUrl("manifest.txt"));
+    expect(listButtons()).toHaveLength(3);
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("The selected manifest"),
+    );
+  });
+
+  it("lists tracks by title", async () => {
+    const { listButtons } = await mountWidget(json(album));
+
+    expect(listButtons().map((btn) => btn.textContent)).toEqual([
+      "Song A",
+      "Song B",
+      "Song C",
+    ]);
+    expect(listButtons().map((btn) => btn.dataset.idx)).toEqual([
+      "0",
+      "1",
+      "2",
+    ]);
+  });
+
+  it("shows the title and plays the src", async () => {
+    const { button, audio, trackText, $ } = await mountWidget(json(album));
+
+    button("play").click();
+
+    expect(audio.src).toBe(trackUrl("a.mp3"));
+    expect(trackText()).toBe("Song A");
+    expect($("#widget_st_musik_top")!.getAttribute("title")).toBe("Song A");
+  });
+
+  it("plays remote sources as-is", async () => {
+    const { listButtons, audio, trackText } = await mountWidget(json(album));
+
+    listButtons()[2].click();
+
+    expect(audio.src).toBe("https://cdn.example.com/c.mp3");
+    expect(trackText()).toBe("Song C");
+  });
+
+  it("resolves sources like manifest.txt lines", async () => {
+    const { listButtons, audio } = await mountWidget(
+      json({
+        tracks: [
+          { src: "My Song.mp3" },
+          { src: "live\\set.mp3" },
+          { src: "a.mp3?v=2" },
+          { src: "/other/a.mp3" },
+        ],
+      }),
+    );
+    const origin = new URL(document.baseURI).origin;
+    const urls = [];
+
+    for (const btn of listButtons()) {
+      btn.click();
+      urls.push(audio.src);
+    }
+
+    expect(urls).toEqual([
+      `${origin}/tracks/My%20Song.mp3`,
+      `${origin}/tracks/live/set.mp3`,
+      `${origin}/tracks/a.mp3?v=2`,
+      `${origin}/other/a.mp3`,
+    ]);
+  });
+
+  it.each([
+    ["missing", { src: "a.mp3" }],
+    ["empty", { src: "a.mp3", title: "" }],
+    ["blank", { src: "a.mp3", title: "   " }],
+    ["not a string", { src: "a.mp3", title: 42 }],
+    ["null", { src: "a.mp3", title: null }],
+  ])("uses the src as title when the title is %s", async (_, entry) => {
+    const { listButtons, trackText } = await mountWidget(
+      json({ tracks: [entry] }),
+    );
+
+    listButtons()[0].click();
+
+    expect(listButtons()[0].textContent).toBe("a.mp3");
+    expect(trackText()).toBe("a.mp3");
+  });
+
+  it("trims src and title", async () => {
+    const { listButtons, audio } = await mountWidget(
+      json({ tracks: [{ src: "  a.mp3 ", title: "  Song A  " }] }),
+    );
+
+    listButtons()[0].click();
+
+    expect(listButtons()[0].textContent).toBe("Song A");
+    expect(audio.src).toBe(trackUrl("a.mp3"));
+  });
+
+  it("skips entries without a usable src and keeps the rest", async () => {
+    const { listButtons } = await mountWidget(
+      json({
+        tracks: [
+          null,
+          "a.mp3",
+          42,
+          [],
+          {},
+          { title: "No source" },
+          { src: "" },
+          { src: "   " },
+          { src: 7, title: "Numeric source" },
+          { src: "ok.mp3", title: "Kept" },
+        ],
+      }),
+    );
+
+    expect(listButtons().map((btn) => btn.textContent)).toEqual(["Kept"]);
+  });
+
+  it("ignores unknown fields", async () => {
+    const { listButtons } = await mountWidget(
+      json({
+        name: "My album",
+        tracks: [{ src: "a.mp3", title: "Song A", artist: "Someone" }],
+      }),
+    );
+
+    expect(listButtons().map((btn) => btn.textContent)).toEqual(["Song A"]);
+  });
+
+  it.each([
+    ["text/plain", "text/plain"],
+    ["no content type", ""],
+    ["application/json with charset", "application/json; charset=utf-8"],
+  ])("accepts a manifest served as %s", async (_, contentType) => {
+    const { listButtons } = await mountWidget({
+      ...json(album),
+      contentType,
+    });
+
+    expect(listButtons()).toHaveLength(3);
+  });
+
+  it.each([
+    ["invalid JSON", { manifest: "{ tracks: [" }],
+    ["a top-level array", json([{ src: "a.mp3" }])],
+    ["a missing tracks field", json({ songs: [] })],
+    ["tracks that is not an array", json({ tracks: { src: "a.mp3" } })],
+    ["an empty tracks array", json({ tracks: [] })],
+    ["no usable entries", json({ tracks: [{ title: "x" }, null] })],
+    ["null", json(null)],
+    ["a 404 response", { status: 404 }],
+    ["an HTML response", { contentType: "text/html" }],
+    ["a network error", { fetchError: true }],
+  ])("shows Manifest missing! for %s", async (_, options) => {
+    const { trackText, listButtons, button } = await mountWidget({
+      ...json(album),
+      ...options,
+    });
+
+    expect(trackText()).toBe("Manifest missing!");
+    expect(listButtons()).toHaveLength(0);
+    expect(button("play").disabled).toBe(true);
+    expect(consoleError).toHaveBeenCalledWith(
+      "Could not fetch or process manifest.json",
+    );
+  });
+
+  it("still rejects JSON responses for manifest.txt", async () => {
+    const { trackText } = await mountWidget({
+      manifest: JSON.stringify(album),
+      contentType: "application/json",
+    });
+
+    expect(trackText()).toBe("Manifest missing!");
+  });
+
+  it("autoplays the first track by title", async () => {
+    const { audio, trackText } = await mountWidget({
+      ...json(album),
+      settings: { manifest: "json", autoplay: true },
+    });
+
+    expect(audio.src).toBe(trackUrl("a.mp3"));
+    expect(trackText()).toBe("Song A");
+  });
+
+  it("shuffles json tracks", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    const { button, trackText } = await mountWidget({
+      ...json(album),
+      settings: { manifest: "json", randomize: true },
+    });
+
+    const seen = [];
+    for (let i = 0; i < 3; i++) {
+      button("next_track").click();
+      seen.push(trackText());
+    }
+
+    expect(seen).toEqual(["Song B", "Song C", "Song A"]);
+  });
+
+  it("scrolls long titles rather than long sources", async () => {
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(
+      function (this: HTMLElement) {
+        return (this.textContent ?? "").length * 10;
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(145);
+
+    const { listButtons, shadow } = await mountWidget({
+      ...json({
+        tracks: [
+          { src: "a-very-long-file-name-that-would-overflow.mp3", title: "A" },
+        ],
+      }),
+      settings: { manifest: "json", scrollable_title: true },
+    });
+
+    listButtons()[0].click();
+
+    expect(
+      shadow
+        .querySelector("#widget_st_musik_track")!
+        .classList.contains("widget_st_musik_track_scrolling"),
+    ).toBe(false);
+  });
+});
+
 describe("playback controls", () => {
   it("starts the first track when play is pressed with nothing selected", async () => {
     const { button, audio, trackText, $ } = await mountWidget();

@@ -8,6 +8,12 @@ interface Settings {
   randomize?: boolean;
   secondary_bar?: boolean;
   scrollable_title?: boolean;
+  manifest?: string;
+}
+
+interface Track {
+  src: string;
+  title: string;
 }
 
 const themeModules = import.meta.glob<string>("./themes/*.css", {
@@ -30,7 +36,7 @@ const currentScript = (document.currentScript ??
 
 const tracksBaseUrl = new URL("/tracks/", document.baseURI);
 
-let tracks: string[] = [];
+let tracks: Track[] = [];
 let currentTrackIndex = -1;
 let playOrder: number[] = [];
 let playOrderPos = -1;
@@ -102,12 +108,12 @@ function setTrackText(text: string) {
 
 function setTrack() {
   const track = tracks[currentTrackIndex];
-  audio.src = new URL(track, tracksBaseUrl).href;
-  setTrackText(track);
+  audio.src = new URL(track.src, tracksBaseUrl).href;
+  setTrackText(track.title);
 
   player!
     .querySelector("#widget_st_musik_top")
-    ?.setAttribute("title", tracks[currentTrackIndex]);
+    ?.setAttribute("title", track.title);
 
   return playAudio();
 }
@@ -257,30 +263,86 @@ function initializePlayer() {
   }
 }
 
+function parseTextManifest(raw: string): Track[] {
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => ({ src: line, title: line }));
+}
+
+function parseJsonManifest(raw: string): Track[] {
+  const data = JSON.parse(raw);
+
+  if (!data || typeof data !== "object" || !Array.isArray(data.tracks)) {
+    throw new Error("manifest.json must be an object with a tracks array");
+  }
+
+  const parsed: Track[] = [];
+
+  for (const entry of data.tracks) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+
+    const src = typeof entry.src === "string" ? entry.src.trim() : "";
+
+    if (!src) {
+      continue;
+    }
+
+    const title = typeof entry.title === "string" ? entry.title.trim() : "";
+
+    parsed.push({ src, title: title || src });
+  }
+
+  if (parsed.length === 0) {
+    throw new Error("manifest.json has no playable tracks");
+  }
+
+  return parsed;
+}
+
+function getManifestFormat() {
+  const format = settings.manifest ?? "txt";
+
+  if (format === "txt" || format === "json") {
+    return format;
+  }
+
+  console.error(
+    'The selected manifest for widget_st_musik does not exist. Use "txt" or "json". Falling back to "txt".',
+  );
+
+  return "txt";
+}
+
 async function getTracks() {
+  const format = getManifestFormat();
+  const fileName = `manifest.${format}`;
+
   try {
-    const res = await fetch(new URL("manifest.txt", tracksBaseUrl));
+    const res = await fetch(new URL(fileName, tracksBaseUrl));
 
     if (!res.ok) {
-      throw new Error(`manifest.txt responded with ${res.status}`);
+      throw new Error(`${fileName} responded with ${res.status}`);
     }
 
     const contentType = res.headers.get("content-type") ?? "";
+    const rejectedType = format === "json" ? /html/i : /html|json/i;
 
-    if (/html|json/i.test(contentType)) {
-      throw new Error(`manifest.txt responded with ${contentType}`);
+    if (rejectedType.test(contentType)) {
+      throw new Error(`${fileName} responded with ${contentType}`);
     }
 
     const raw = await res.text();
 
-    tracks = raw
-      .split("\n")
-      .map((track) => track.trim())
-      .filter(Boolean);
+    tracks =
+      format === "json" ? parseJsonManifest(raw) : parseTextManifest(raw);
 
     tracks.forEach((track, index) => {
       const btn = document.createElement("button");
-      btn.textContent = track;
+      btn.textContent = track.title;
       btn.setAttribute("data-idx", String(index));
 
       listEl!.appendChild(btn);
@@ -288,7 +350,7 @@ async function getTracks() {
 
     return true;
   } catch {
-    console.error("Could not fetch or process manifest.txt");
+    console.error(`Could not fetch or process ${fileName}`);
 
     return false;
   }
