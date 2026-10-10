@@ -1,0 +1,32 @@
+#widget_st_musik_track.widget_st_musik_track_scrolling {
+  text-overflow: clip;
+}
+
+.widget_st_musik_track_scrolling .widget_st_musik_track_text {
+  display: inline-block;
+  animation: widget_st_musik_title_scroll
+    var(--widget-st-musik-scroll-duration, 6s) linear infinite alternate;
+}
+
+@keyframes widget_st_musik_title_scroll {
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+
+  85%,
+  100% {
+    transform: translateX(var(--widget-st-musik-scroll-distance, 0));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #widget_st_musik_track.widget_st_musik_track_scrolling {
+    text-overflow: ellipsis;
+  }
+
+  .widget_st_musik_track_scrolling .widget_st_musik_track_text {
+    display: inline;
+    animation: none;
+  }
+}

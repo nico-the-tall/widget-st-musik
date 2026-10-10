@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import aeroCss from "./themes/aero.css?inline";
 import brutalistCss from "./themes/brutalist.css?inline";
 import win95Css from "./themes/win95.css?inline";
+import scrollTitleCss from "./scroll-title.css?inline";
 
 interface MountOptions {
   settings?: Record<string, unknown>;
@@ -211,7 +212,7 @@ describe("initialization", () => {
     const { shadow, listButtons } = await mountWidget({
       withoutScript: true,
       scriptSrc: "/src/widget-st-musik.ts",
-      settings: { secondaryBar: true },
+      settings: { secondary_bar: true },
     });
 
     expect(shadow).not.toBeNull();
@@ -317,7 +318,7 @@ describe("manifest loading", () => {
   ])("disables the player on %s", async (_, options) => {
     const { shadow, trackText } = await mountWidget({
       ...options,
-      settings: { secondaryBar: true },
+      settings: { secondary_bar: true },
     });
 
     expect(trackText()).toBe("Manifest missing!");
@@ -798,7 +799,7 @@ describe("secondary bar", () => {
   });
 
   it("is rendered between the controls and the track list", async () => {
-    const { $ } = await mountWidget({ settings: { secondaryBar: true } });
+    const { $ } = await mountWidget({ settings: { secondary_bar: true } });
     const bar = $("#widget_st_musik_secondary");
 
     expect(bar).not.toBeNull();
@@ -809,7 +810,7 @@ describe("secondary bar", () => {
   describe("repeat", () => {
     it("shows an icon with an accessible label", async () => {
       const { button } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
       const repeat = button("repeat");
 
@@ -820,7 +821,7 @@ describe("secondary bar", () => {
 
     it("toggles looping of the current track", async () => {
       const { button, audio } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
       const repeat = button("repeat");
 
@@ -839,7 +840,7 @@ describe("secondary bar", () => {
 
     it("stays on when switching tracks", async () => {
       const { button, audio } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       button("repeat").click();
@@ -867,7 +868,7 @@ describe("secondary bar", () => {
 
     it("shows an icon with an accessible label", async () => {
       const { button } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
       const shuffle = button("shuffle");
 
@@ -877,7 +878,7 @@ describe("secondary bar", () => {
 
     it("is not pressed when randomize is off", async () => {
       const { button } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       expect(isPressed(button("shuffle"))).toBe(false);
@@ -886,7 +887,7 @@ describe("secondary bar", () => {
 
     it("is pressed when randomize is on", async () => {
       const { button } = await mountWidget({
-        settings: { secondaryBar: true, randomize: true },
+        settings: { secondary_bar: true, randomize: true },
       });
 
       expect(isPressed(button("shuffle"))).toBe(true);
@@ -894,7 +895,7 @@ describe("secondary bar", () => {
 
     it("toggles its pressed state", async () => {
       const { button } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       button("shuffle").click();
@@ -907,7 +908,7 @@ describe("secondary bar", () => {
     it("plays in shuffled order after turning it on", async () => {
       const { button, currentTrack } = await mountWidget({
         manifest,
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       button("shuffle").click();
@@ -924,7 +925,7 @@ describe("secondary bar", () => {
     it("keeps the current track playing when turned on", async () => {
       const { button, audio, currentTrack } = await mountWidget({
         manifest,
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       button("next_track").click();
@@ -939,7 +940,7 @@ describe("secondary bar", () => {
     it("starts a fresh shuffled order each time it is turned on", async () => {
       const { button, currentTrack } = await mountWidget({
         manifest,
-        settings: { secondaryBar: true, randomize: true },
+        settings: { secondary_bar: true, randomize: true },
       });
 
       button("next_track").click();
@@ -956,7 +957,7 @@ describe("secondary bar", () => {
     it("returns to list order from the current track when turned off", async () => {
       const { button, currentTrack } = await mountWidget({
         manifest,
-        settings: { secondaryBar: true, randomize: true },
+        settings: { secondary_bar: true, randomize: true },
       });
 
       button("next_track").click();
@@ -974,7 +975,7 @@ describe("secondary bar", () => {
     it("plays the first track of the new order when play is pressed", async () => {
       const { button, currentTrack } = await mountWidget({
         manifest,
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       button("shuffle").click();
@@ -992,7 +993,7 @@ describe("secondary bar", () => {
 
     it("starts at full volume", async () => {
       const { $, audio } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       expect($<HTMLInputElement>("#widget_st_musik_volume_slider")!.value).toBe(
@@ -1003,7 +1004,7 @@ describe("secondary bar", () => {
 
     it("sets the audio volume from the slider", async () => {
       const { $, audio } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
       const slider = $<HTMLInputElement>("#widget_st_musik_volume_slider")!;
 
@@ -1016,7 +1017,7 @@ describe("secondary bar", () => {
 
     it("keeps the volume when switching tracks", async () => {
       const { $, audio, button } = await mountWidget({
-        settings: { secondaryBar: true },
+        settings: { secondary_bar: true },
       });
 
       setVolume($<HTMLInputElement>("#widget_st_musik_volume_slider")!, "0.4");
@@ -1024,6 +1025,243 @@ describe("secondary bar", () => {
       button("next_track").click();
 
       expect(audio.volume).toBe(0.4);
+    });
+  });
+});
+
+describe("scrollable title", () => {
+  const LONG = "A Very Long Song Title That Does Not Fit.mp3";
+  let titleWidth = 145;
+
+  beforeEach(() => {
+    titleWidth = 145;
+
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(
+      function (this: HTMLElement) {
+        return (this.textContent ?? "").length * 10;
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+      () => titleWidth,
+    );
+  });
+
+  const track = (shadow: ShadowRoot) =>
+    shadow.querySelector<HTMLElement>("#widget_st_musik_track")!;
+
+  const isScrolling = (shadow: ShadowRoot) =>
+    track(shadow).classList.contains("widget_st_musik_track_scrolling");
+
+  describe("when off", () => {
+    it("is off by default and keeps the title as plain text", async () => {
+      const { shadow, listButtons, trackText } = await mountWidget({
+        manifest: `${LONG}\n`,
+      });
+
+      listButtons()[0].click();
+
+      expect(trackText()).toBe(LONG);
+      expect(track(shadow).children).toHaveLength(0);
+      expect(isScrolling(shadow)).toBe(false);
+      expect(track(shadow).getAttribute("style")).toBeNull();
+    });
+
+    it("adds no extra styles", async () => {
+      const { shadow } = await mountWidget();
+
+      expect(shadow.querySelectorAll("style")).toHaveLength(1);
+    });
+
+    it("keeps the title as plain text when set to false", async () => {
+      const { shadow, listButtons } = await mountWidget({
+        manifest: `${LONG}\n`,
+        settings: { scrollable_title: false },
+      });
+
+      listButtons()[0].click();
+
+      expect(track(shadow).children).toHaveLength(0);
+      expect(isScrolling(shadow)).toBe(false);
+    });
+  });
+
+  describe("when on", () => {
+    it("adds the scrolling styles after the theme", async () => {
+      const { shadow } = await mountWidget({
+        settings: { scrollable_title: true },
+      });
+      const styles = shadow.querySelectorAll("style");
+
+      expect(styles).toHaveLength(2);
+      expect(styles[0].textContent).toBe(win95Css);
+      expect(styles[1].textContent).toBe(scrollTitleCss);
+    });
+
+    it("adds the scrolling styles before a custom stylesheet", async () => {
+      const { shadow } = await mountWidget({
+        settings: {
+          scrollable_title: true,
+          stylesheet_href: "https://example.com/custom.css",
+        },
+      });
+
+      const scrollStyle = shadow.querySelectorAll("style")[1];
+      expect(scrollStyle.nextElementSibling!.tagName).toBe("LINK");
+    });
+
+    it("adds the scrolling styles with the 'none' theme", async () => {
+      const { shadow } = await mountWidget({
+        settings: { scrollable_title: true, theme: "none" },
+      });
+
+      expect(shadow.querySelectorAll("style")[1].textContent).toBe(
+        scrollTitleCss,
+      );
+    });
+
+    it("wraps the title in a text span", async () => {
+      const { shadow, listButtons, trackText } = await mountWidget({
+        manifest: `${LONG}\n`,
+        settings: { scrollable_title: true },
+      });
+
+      listButtons()[0].click();
+
+      const text = track(shadow).querySelector(".widget_st_musik_track_text");
+      expect(text?.textContent).toBe(LONG);
+      expect(trackText()).toBe(LONG);
+    });
+
+    it("scrolls a title that does not fit", async () => {
+      const { shadow, listButtons } = await mountWidget({
+        manifest: `${LONG}\n`,
+        settings: { scrollable_title: true },
+      });
+
+      listButtons()[0].click();
+
+      const overflow = LONG.length * 10 - 145;
+      const el = track(shadow);
+      expect(isScrolling(shadow)).toBe(true);
+      expect(
+        el.style.getPropertyValue("--widget-st-musik-scroll-distance"),
+      ).toBe(`-${overflow}px`);
+      expect(
+        el.style.getPropertyValue("--widget-st-musik-scroll-duration"),
+      ).toBe(`${(overflow / 30 / 0.7).toFixed(2)}s`);
+    });
+
+    it("does not scroll a title that fits", async () => {
+      const { shadow, listButtons } = await mountWidget({
+        settings: { scrollable_title: true },
+      });
+
+      listButtons()[0].click();
+
+      expect(isScrolling(shadow)).toBe(false);
+    });
+
+    it("does not scroll a title that fits exactly", async () => {
+      const { shadow, listButtons } = await mountWidget({
+        manifest: "x".repeat(10) + ".mp3\n",
+        settings: { scrollable_title: true },
+      });
+      titleWidth = 140;
+
+      listButtons()[0].click();
+
+      expect(isScrolling(shadow)).toBe(false);
+    });
+
+    it("stops scrolling when switching to a title that fits", async () => {
+      const { shadow, button } = await mountWidget({
+        manifest: `${LONG}\nshort.mp3\n`,
+        settings: { scrollable_title: true },
+      });
+
+      button("next_track").click();
+      expect(isScrolling(shadow)).toBe(true);
+
+      button("next_track").click();
+      expect(isScrolling(shadow)).toBe(false);
+    });
+
+    it("restarts the scroll on a new text element for each track", async () => {
+      const { shadow, button } = await mountWidget({
+        manifest: `${LONG}\n${LONG} 2\n`,
+        settings: { scrollable_title: true },
+      });
+
+      button("next_track").click();
+      const first = track(shadow).firstElementChild;
+
+      button("next_track").click();
+      const second = track(shadow).firstElementChild;
+
+      expect(second).not.toBe(first);
+      expect(track(shadow).children).toHaveLength(1);
+    });
+
+    it("wraps the status messages too", async () => {
+      const { shadow, trackText } = await mountWidget({
+        status: 404,
+        settings: { scrollable_title: true },
+      });
+
+      expect(trackText()).toBe("Manifest missing!");
+      expect(
+        track(shadow).querySelector(".widget_st_musik_track_text"),
+      ).not.toBeNull();
+    });
+
+    it("re-checks the title when its size changes", async () => {
+      const observers: { cb: () => void; target: Element }[] = [];
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          cb: () => void;
+          constructor(cb: () => void) {
+            this.cb = cb;
+          }
+          observe(target: Element) {
+            observers.push({ cb: this.cb, target });
+          }
+          disconnect() {}
+          unobserve() {}
+        },
+      );
+
+      const { shadow, listButtons } = await mountWidget({
+        manifest: "medium length.mp3\n",
+        settings: { scrollable_title: true },
+      });
+      titleWidth = 300;
+      listButtons()[0].click();
+      expect(isScrolling(shadow)).toBe(false);
+
+      expect(observers).toHaveLength(1);
+      expect(observers[0].target).toBe(track(shadow));
+
+      titleWidth = 100;
+      observers[0].cb();
+
+      expect(isScrolling(shadow)).toBe(true);
+    });
+
+    it("does not observe size changes when off", async () => {
+      const observe = vi.fn();
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          observe = observe;
+          disconnect() {}
+          unobserve() {}
+        },
+      );
+
+      await mountWidget();
+
+      expect(observe).not.toHaveBeenCalled();
     });
   });
 });

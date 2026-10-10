@@ -1,11 +1,13 @@
 import markup from "./widget-st-musik.html?raw";
+import scrollTitleCss from "./scroll-title.css?inline";
 
 interface Settings {
   theme?: string;
   stylesheet_href?: string;
   autoplay?: boolean;
   randomize?: boolean;
-  secondaryBar?: boolean;
+  secondary_bar?: boolean;
+  scrollable_title?: boolean;
 }
 
 const themeModules = import.meta.glob<string>("./themes/*.css", {
@@ -60,10 +62,48 @@ function playAudio() {
   );
 }
 
+const TITLE_SCROLL_SPEED = 30;
+
+function updateTitleScroll() {
+  trackEl!.classList.remove("widget_st_musik_track_scrolling");
+
+  const overflow = trackEl!.scrollWidth - trackEl!.clientWidth;
+
+  if (overflow <= 0) {
+    return;
+  }
+
+  const duration = overflow / TITLE_SCROLL_SPEED / 0.7;
+
+  trackEl!.style.setProperty(
+    "--widget-st-musik-scroll-distance",
+    `-${overflow}px`,
+  );
+  trackEl!.style.setProperty(
+    "--widget-st-musik-scroll-duration",
+    `${duration.toFixed(2)}s`,
+  );
+  trackEl!.classList.add("widget_st_musik_track_scrolling");
+}
+
+function setTrackText(text: string) {
+  if (!settings.scrollable_title) {
+    trackEl!.textContent = text;
+    return;
+  }
+
+  const textEl = document.createElement("span");
+  textEl.className = "widget_st_musik_track_text";
+  textEl.textContent = text;
+  trackEl!.replaceChildren(textEl);
+
+  updateTitleScroll();
+}
+
 function setTrack() {
   const track = tracks[currentTrackIndex];
   audio.src = new URL(track, tracksBaseUrl).href;
-  trackEl!.textContent = track;
+  setTrackText(track);
 
   player!
     .querySelector("#widget_st_musik_top")
@@ -150,6 +190,12 @@ function initialize() {
 
     shadow.appendChild(style);
 
+    if (settings.scrollable_title) {
+      const scrollStyle = document.createElement("style");
+      scrollStyle.textContent = scrollTitleCss;
+      shadow.appendChild(scrollStyle);
+    }
+
     const customStylesheetHref = settings["stylesheet_href"];
 
     if (typeof customStylesheetHref === "string" && customStylesheetHref) {
@@ -163,7 +209,7 @@ function initialize() {
     const root = document.createElement("div");
     root.innerHTML = markup;
 
-    if (!settings.secondaryBar) {
+    if (!settings.secondary_bar) {
       root.querySelector("#widget_st_musik_secondary")?.remove();
     }
 
@@ -187,7 +233,11 @@ function initialize() {
 function initializePlayer() {
   trackEl = player!.querySelector("#widget_st_musik_track")!;
   durationEl = player!.querySelector("#widget_st_musik_duration")!;
-  trackEl.textContent = "No track selected";
+  setTrackText("No track selected");
+
+  if (settings.scrollable_title && typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(updateTitleScroll).observe(trackEl);
+  }
 }
 
 async function getTracks() {
@@ -228,7 +278,7 @@ async function getTracks() {
 }
 
 function disablePlayer() {
-  trackEl!.textContent = "Manifest missing!";
+  setTrackText("Manifest missing!");
 
   player!.querySelectorAll("button, input").forEach((el) => {
     (el as HTMLButtonElement | HTMLInputElement).disabled = true;
