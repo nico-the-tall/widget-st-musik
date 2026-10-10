@@ -157,6 +157,22 @@ function switchTrack(direction: "prev" | "next") {
   return setTrack();
 }
 
+const STYLESHEET_TIMEOUT = 3000;
+
+function hideUntilLoaded(root: HTMLElement, link: HTMLLinkElement) {
+  root.style.display = "none";
+
+  const reveal = () => {
+    clearTimeout(timeout);
+    root.style.removeProperty("display");
+  };
+
+  const timeout = setTimeout(reveal, STYLESHEET_TIMEOUT);
+
+  link.addEventListener("load", reveal, { once: true });
+  link.addEventListener("error", reveal, { once: true });
+}
+
 function initialize() {
   try {
     const container = currentScript!.parentElement!;
@@ -196,6 +212,13 @@ function initialize() {
       shadow.appendChild(scrollStyle);
     }
 
+    const root = document.createElement("div");
+    root.innerHTML = markup;
+
+    if (!settings.secondary_bar) {
+      root.querySelector("#widget_st_musik_secondary")?.remove();
+    }
+
     const customStylesheetHref = settings["stylesheet_href"];
 
     if (typeof customStylesheetHref === "string" && customStylesheetHref) {
@@ -203,14 +226,8 @@ function initialize() {
       link.rel = "stylesheet";
       link.href = customStylesheetHref;
 
+      hideUntilLoaded(root, link);
       shadow.appendChild(link);
-    }
-
-    const root = document.createElement("div");
-    root.innerHTML = markup;
-
-    if (!settings.secondary_bar) {
-      root.querySelector("#widget_st_musik_secondary")?.remove();
     }
 
     shadow.appendChild(root);

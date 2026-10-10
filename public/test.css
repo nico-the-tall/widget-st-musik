@@ -1,0 +1,13 @@
+#widget_st_musik {
+  opacity: 0.5;
+  transition: opacity 0.5s ease-in-out;
+}
+
+#widget_st_musik:hover {
+  opacity: 1;
+}
+
+#widget_st_musik button {
+  background: rgb(127, 127, 248);
+  color: white;
+}

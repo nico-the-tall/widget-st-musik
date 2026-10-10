@@ -82,7 +82,11 @@ function stubMediaElement() {
 
 async function flush() {
   for (let i = 0; i < 5; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    if (vi.isFakeTimers()) {
+      await vi.advanceTimersByTimeAsync(0);
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
   }
 }
 
@@ -278,6 +282,119 @@ describe("themes", () => {
     const { shadow } = await mountWidget({ settings: { stylesheet_href: "" } });
 
     expect(shadow.querySelector("link")).toBeNull();
+  });
+});
+
+describe("custom stylesheet loading", () => {
+  const href = "https://example.com/custom.css";
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const widgetRoot = (shadow: ShadowRoot) =>
+    shadow.querySelector<HTMLElement>("#widget_st_musik")!.parentElement!;
+
+  const isHidden = (shadow: ShadowRoot) =>
+    widgetRoot(shadow).style.display === "none";
+
+  it("does not hide the player without a custom stylesheet", async () => {
+    const { shadow } = await mountWidget();
+
+    expect(isHidden(shadow)).toBe(false);
+    expect(widgetRoot(shadow).getAttribute("style")).toBeNull();
+  });
+
+  it("does not hide the player for an empty stylesheet_href", async () => {
+    const { shadow } = await mountWidget({ settings: { stylesheet_href: "" } });
+
+    expect(isHidden(shadow)).toBe(false);
+  });
+
+  it("hides the player while the stylesheet loads", async () => {
+    const { shadow } = await mountWidget({
+      settings: { stylesheet_href: href },
+    });
+
+    expect(isHidden(shadow)).toBe(true);
+  });
+
+  it("hides with display none so styles apply without transitions", async () => {
+    const { shadow } = await mountWidget({
+      settings: { stylesheet_href: href },
+    });
+
+    expect(widgetRoot(shadow).style.display).toBe("none");
+    expect(widgetRoot(shadow).style.visibility).toBe("");
+  });
+
+  it("leaves no inline styles behind once shown", async () => {
+    const { shadow } = await mountWidget({
+      settings: { stylesheet_href: href },
+    });
+
+    shadow.querySelector("link")!.dispatchEvent(new Event("load"));
+
+    expect(widgetRoot(shadow).style.cssText).toBe("");
+  });
+
+  it.each(["load", "error"])(
+    "shows the player when the stylesheet fires %s",
+    async (eventType) => {
+      const { shadow } = await mountWidget({
+        settings: { stylesheet_href: href },
+      });
+
+      shadow.querySelector("link")!.dispatchEvent(new Event(eventType));
+
+      expect(isHidden(shadow)).toBe(false);
+    },
+  );
+
+  it("shows the player after 3 seconds if the stylesheet never loads", async () => {
+    vi.useFakeTimers();
+
+    const { shadow } = await mountWidget({
+      settings: { stylesheet_href: href },
+    });
+
+    await vi.advanceTimersByTimeAsync(2900);
+    expect(isHidden(shadow)).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(isHidden(shadow)).toBe(false);
+  });
+
+  it("cancels the timeout once the stylesheet loads", async () => {
+    vi.useFakeTimers();
+
+    const { shadow } = await mountWidget({
+      settings: { stylesheet_href: href },
+    });
+    expect(vi.getTimerCount()).toBe(1);
+
+    shadow.querySelector("link")!.dispatchEvent(new Event("load"));
+
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("keeps the stylesheet after the theme styles", async () => {
+    const { shadow } = await mountWidget({
+      settings: { stylesheet_href: href, scrollable_title: true },
+    });
+
+    const tags = Array.from(shadow.children).map((el) => el.tagName);
+    expect(tags).toEqual(["STYLE", "STYLE", "LINK", "DIV", "AUDIO"]);
+  });
+
+  it("loads the manifest while the stylesheet is loading", async () => {
+    const { shadow, fetchMock, listButtons } = await mountWidget({
+      settings: { stylesheet_href: href },
+    });
+
+    expect(isHidden(shadow)).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(listButtons()).toHaveLength(3);
   });
 });
 
