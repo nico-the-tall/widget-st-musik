@@ -24,4 +24,4 @@ coverage
 *.sln
 *.sw?
 
-public/tracks
+public/tracks/*.mp3

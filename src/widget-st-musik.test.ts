@@ -1651,3 +1651,104 @@ describe("scrollable title", () => {
     });
   });
 });
+
+describe("untrusted text", () => {
+  const PAYLOAD = '<img src=x onerror="window.__xss = true"><b>bold</b>';
+
+  afterEach(() => {
+    delete (window as { __xss?: unknown }).__xss;
+  });
+
+  function expectNoInjectedMarkup(shadow: ShadowRoot) {
+    expect(shadow.querySelector("img, b, script")).toBeNull();
+
+    for (const el of Array.from(shadow.querySelectorAll("*"))) {
+      for (const attr of Array.from(el.attributes)) {
+        expect(attr.name.startsWith("on")).toBe(false);
+      }
+    }
+
+    expect((window as { __xss?: unknown }).__xss).toBeUndefined();
+  }
+
+  it.each([
+    ["manifest.txt line", { manifest: `${PAYLOAD}\n` }],
+    [
+      "manifest.json title",
+      {
+        manifest: JSON.stringify({
+          tracks: [{ src: "a.mp3", title: PAYLOAD }],
+        }),
+        contentType: "application/json",
+        settings: { manifest: "json" },
+      },
+    ],
+    [
+      "manifest.json title with a scrolling title",
+      {
+        manifest: JSON.stringify({
+          tracks: [{ src: "a.mp3", title: PAYLOAD }],
+        }),
+        contentType: "application/json",
+        settings: { manifest: "json", scrollable_title: true },
+      },
+    ],
+  ])("renders HTML in a %s as plain text", async (_, options) => {
+    const { shadow, listButtons, trackText, $ } = await mountWidget(options);
+
+    listButtons()[0].click();
+    await flush();
+
+    expect(listButtons()[0].textContent).toBe(PAYLOAD);
+    expect(trackText()).toBe(PAYLOAD);
+    expect($("#widget_st_musik_top")!.getAttribute("title")).toBe(PAYLOAD);
+    expectNoInjectedMarkup(shadow);
+  });
+
+  it("renders HTML in a source used as title as plain text", async () => {
+    const { shadow, listButtons, trackText } = await mountWidget({
+      manifest: JSON.stringify({ tracks: [{ src: PAYLOAD }] }),
+      contentType: "application/json",
+      settings: { manifest: "json" },
+    });
+
+    listButtons()[0].click();
+
+    expect(trackText()).toBe(PAYLOAD);
+    expectNoInjectedMarkup(shadow);
+  });
+
+  it("only uses a javascript: source as the audio source", async () => {
+    const src = "javascript:window.__xss=true";
+    const { shadow, listButtons, audio } = await mountWidget({
+      manifest: `${src}\n`,
+    });
+
+    listButtons()[0].click();
+    await flush();
+
+    expect(audio.src).toBe(src);
+    expect(shadow.querySelector("a, iframe, link")).toBeNull();
+    expectNoInjectedMarkup(shadow);
+  });
+
+  it("does not let a __proto__ key in manifest.json change other objects", async () => {
+    const { listButtons } = await mountWidget({
+      manifest:
+        '{"__proto__": {"polluted": true}, "tracks": [{"src": "a.mp3", "__proto__": {"polluted": true}}]}',
+      contentType: "application/json",
+      settings: { manifest: "json" },
+    });
+
+    expect(listButtons()).toHaveLength(1);
+    expect(({} as { polluted?: unknown }).polluted).toBeUndefined();
+  });
+
+  it("does not let a __proto__ key in the settings change other objects", async () => {
+    await mountWidget({
+      rawSettings: encodeURIComponent('{"__proto__": {"polluted": true}}'),
+    });
+
+    expect(({} as { polluted?: unknown }).polluted).toBeUndefined();
+  });
+});
