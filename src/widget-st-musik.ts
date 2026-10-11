@@ -10,6 +10,7 @@ interface Settings {
   scrollable_title?: boolean;
   manifest?: string;
   default_volume?: number | string;
+  backlink?: boolean;
 }
 
 interface Track {
@@ -285,6 +286,11 @@ function initialize() {
 
     if (!settings.secondary_bar) {
       root.querySelector("#widget_st_musik_secondary")?.remove();
+    }
+
+    if (settings.backlink === false) {
+      const link = root.querySelector("#widget_st_musik_home_link");
+      link?.replaceWith(link.textContent ?? "");
     }
 
     const customStylesheetHref = settings["stylesheet_href"];

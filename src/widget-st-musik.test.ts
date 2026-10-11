@@ -2326,6 +2326,57 @@ describe("header link", () => {
   });
 });
 
+describe("backlink", () => {
+  const header = (shadow: ShadowRoot) =>
+    shadow.querySelector<HTMLElement>(".widget_st_musik_header")!;
+
+  it.each([
+    ["by default", {}],
+    ["when true", { backlink: true }],
+    ["for a non-boolean value", { backlink: "no" }],
+    ["for null", { backlink: null }],
+    ["for 0", { backlink: 0 }],
+  ])("links back to widget.st %s", async (_, settings) => {
+    const { shadow } = await mountWidget({ settings });
+    const link = shadow.querySelector<HTMLAnchorElement>(
+      "#widget_st_musik_home_link",
+    );
+
+    expect(link).not.toBeNull();
+    expect(link!.getAttribute("href")).toBe("https://widget.st/widget/musik");
+  });
+
+  it("shows Musik as plain text when false", async () => {
+    const { shadow } = await mountWidget({ settings: { backlink: false } });
+
+    expect(shadow.querySelector("#widget_st_musik_home_link")).toBeNull();
+    expect(shadow.querySelector("a")).toBeNull();
+    expect(header(shadow).textContent!.replace(/\s+/g, " ").trim()).toBe(
+      "Musik",
+    );
+  });
+
+  it("keeps the now playing slot after the text when false", async () => {
+    const { shadow } = await mountWidget({ settings: { backlink: false } });
+    const nowPlaying = header(shadow).querySelector(
+      "#widget_st_musik_now_playing",
+    )!;
+
+    expect(nowPlaying).not.toBeNull();
+    expect(nowPlaying.parentElement!.firstChild!.textContent).toBe("Musik");
+  });
+
+  it("keeps the player working when false", async () => {
+    const { button, audio } = await mountWidget({
+      settings: { backlink: false },
+    });
+
+    button("play").click();
+
+    expect(audio.paused).toBe(false);
+  });
+});
+
 describe("default volume", () => {
   const slider = (shadow: ShadowRoot) =>
     shadow.querySelector<HTMLInputElement>("#widget_st_musik_volume_slider")!;
