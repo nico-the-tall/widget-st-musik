@@ -106,6 +106,28 @@ function setTrackText(text: string) {
   updateTitleScroll();
 }
 
+function updateMediaSessionMetadata(track: Track) {
+  if (!("mediaSession" in navigator) || typeof MediaMetadata === "undefined") {
+    return;
+  }
+
+  navigator.mediaSession.metadata = new MediaMetadata({ title: track.title });
+}
+
+function setMediaSessionHandlers(handlers: [MediaSessionAction, () => void][]) {
+  if (!("mediaSession" in navigator)) {
+    return;
+  }
+
+  for (const [action, handler] of handlers) {
+    try {
+      navigator.mediaSession.setActionHandler(action, handler);
+    } catch {
+      continue;
+    }
+  }
+}
+
 function setTrack() {
   const track = tracks[currentTrackIndex];
   audio.src = new URL(track.src, tracksBaseUrl).href;
@@ -114,6 +136,16 @@ function setTrack() {
   player!
     .querySelector("#widget_st_musik_top")
     ?.setAttribute("title", track.title);
+
+  listEl!.querySelectorAll("button").forEach((btn) => {
+    if (btn.dataset.idx === String(currentTrackIndex)) {
+      btn.setAttribute("aria-current", "true");
+    } else {
+      btn.removeAttribute("aria-current");
+    }
+  });
+
+  updateMediaSessionMetadata(track);
 
   return playAudio();
 }
@@ -392,7 +424,8 @@ function attachEvents() {
   ];
 
   btnList.addEventListener("click", () => {
-    listEl!.classList.toggle("list_hidden");
+    const hidden = listEl!.classList.toggle("list_hidden");
+    btnList.setAttribute("aria-expanded", String(!hidden));
   });
 
   listEl!.addEventListener("click", (event) => {
@@ -408,24 +441,32 @@ function attachEvents() {
     switchTrack("prev");
   });
 
-  btnRewind.addEventListener("click", () => {
+  function play() {
+    if (currentTrackIndex === -1) {
+      switchTrack("next");
+    }
+    playAudio();
+  }
+
+  function rewind() {
     audio.currentTime = Math.max(0, audio.currentTime - 10);
-  });
+  }
+
+  function forward() {
+    audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+  }
 
   btnPlay.addEventListener("click", () => {
     if (audio.paused) {
-      if (currentTrackIndex === -1) {
-        switchTrack("next");
-      }
-      playAudio();
+      play();
     } else {
       audio.pause();
     }
   });
 
-  btnForward.addEventListener("click", () => {
-    audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
-  });
+  btnRewind.addEventListener("click", rewind);
+
+  btnForward.addEventListener("click", forward);
 
   btnNextTrack.addEventListener("click", () => {
     switchTrack("next");
@@ -471,16 +512,31 @@ function attachEvents() {
 
   volumeSlider?.addEventListener("input", () => {
     audio.volume = Number(volumeSlider.value);
+    volumeSlider.setAttribute(
+      "aria-valuetext",
+      `${Math.round(audio.volume * 100)}%`,
+    );
   });
+
+  setMediaSessionHandlers([
+    ["play", play],
+    ["pause", () => audio.pause()],
+    ["previoustrack", () => switchTrack("prev")],
+    ["nexttrack", () => switchTrack("next")],
+    ["seekbackward", rewind],
+    ["seekforward", forward],
+  ]);
 
   audio.addEventListener("play", () => {
     btnPlay.classList.add("btn_controlled");
+    btnPlay.setAttribute("aria-label", "Pause");
     btnForward.disabled = false;
     btnRewind.disabled = false;
   });
 
   audio.addEventListener("pause", () => {
     btnPlay.classList.remove("btn_controlled");
+    btnPlay.setAttribute("aria-label", "Play");
     btnForward.disabled = true;
     btnRewind.disabled = true;
   });

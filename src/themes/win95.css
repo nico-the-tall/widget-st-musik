@@ -135,6 +135,9 @@
   border: 1px inset var(--color-w) !important;
   color: var(--color-dark);
   box-shadow: -1px -1px var(--color-k) !important;
+}
+
+.widget_st_musik button:active:not(.btn_primary, :disabled) {
   outline: 0 !important;
 }
 

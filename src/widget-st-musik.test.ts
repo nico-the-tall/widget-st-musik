@@ -1752,3 +1752,339 @@ describe("untrusted text", () => {
     expect(({} as { polluted?: unknown }).polluted).toBeUndefined();
   });
 });
+
+describe("a11y", () => {
+  it("names the player region", async () => {
+    const { $ } = await mountWidget();
+    const region = $("#widget_st_musik")!;
+
+    expect(region.getAttribute("role")).toBe("region");
+    expect(region.getAttribute("aria-label")).toBe("Music player");
+  });
+
+  it.each([
+    ["previous_track", "Previous track"],
+    ["rewind", "Rewind 10 seconds"],
+    ["play", "Play"],
+    ["forward", "Forward 10 seconds"],
+    ["next_track", "Next track"],
+    ["repeat", "Repeat"],
+    ["shuffle", "Shuffle"],
+  ])("labels the %s button", async (name, label) => {
+    const { button } = await mountWidget({ settings: { secondary_bar: true } });
+
+    expect(button(name).getAttribute("aria-label")).toBe(label);
+  });
+
+  it("keeps the visible button symbols", async () => {
+    const { button } = await mountWidget();
+
+    expect(
+      ["previous_track", "rewind", "play", "forward", "next_track"].map(
+        (name) => button(name).textContent!.trim(),
+      ),
+    ).toEqual(["⏮", "⏴", "⏯", "⏵", "⏭"]);
+  });
+
+  it("hides every icon from assistive technology", async () => {
+    const { shadow } = await mountWidget({
+      settings: { secondary_bar: true },
+    });
+    const icons = Array.from(shadow.querySelectorAll("svg"));
+
+    expect(icons.length).toBeGreaterThan(0);
+    icons.forEach((icon) => {
+      expect(icon.getAttribute("aria-hidden")).toBe("true");
+      expect(icon.getAttribute("fill")).toBe("currentColor");
+    });
+  });
+
+  describe("play button", () => {
+    it("switches its label between Play and Pause", async () => {
+      const { button } = await mountWidget();
+      const play = button("play");
+
+      play.click();
+      expect(play.getAttribute("aria-label")).toBe("Pause");
+
+      play.click();
+      expect(play.getAttribute("aria-label")).toBe("Play");
+    });
+
+    it("says Pause while autoplaying", async () => {
+      const { button } = await mountWidget({ settings: { autoplay: true } });
+
+      expect(button("play").getAttribute("aria-label")).toBe("Pause");
+    });
+
+    it("says Play when the browser blocks autoplay", async () => {
+      const { button } = await mountWidget({
+        settings: { autoplay: true },
+        playRejects: true,
+      });
+
+      expect(button("play").getAttribute("aria-label")).toBe("Play");
+    });
+  });
+
+  describe("volume slider", () => {
+    it("is labelled and starts at 100%", async () => {
+      const { $ } = await mountWidget({ settings: { secondary_bar: true } });
+      const slider = $<HTMLInputElement>("#widget_st_musik_volume_slider")!;
+
+      expect(slider.getAttribute("aria-label")).toBe("Volume");
+      expect(slider.getAttribute("aria-valuetext")).toBe("100%");
+    });
+
+    it.each([
+      ["0.35", "35%"],
+      ["0", "0%"],
+      ["0.005", "1%"],
+      ["1", "100%"],
+    ])("announces %s as %s", async (value, text) => {
+      const { $ } = await mountWidget({ settings: { secondary_bar: true } });
+      const slider = $<HTMLInputElement>("#widget_st_musik_volume_slider")!;
+
+      slider.value = value;
+      slider.dispatchEvent(new Event("input"));
+
+      expect(slider.getAttribute("aria-valuetext")).toBe(text);
+    });
+  });
+
+  describe("track list", () => {
+    it("reports whether it is expanded", async () => {
+      const { $ } = await mountWidget();
+      const toggle = $<HTMLButtonElement>("#widget_st_musik_list_btn")!;
+
+      expect(toggle.getAttribute("aria-controls")).toBe("widget_st_musik_list");
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+      toggle.click();
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+
+      toggle.click();
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    });
+
+    it("keeps the visible toggle text", async () => {
+      const { $ } = await mountWidget();
+      const toggle = $<HTMLButtonElement>("#widget_st_musik_list_btn")!;
+
+      expect(toggle.textContent!.trim()).toBe("Expand Tracks List");
+      toggle.click();
+      expect(toggle.textContent!.trim()).toBe("Expand Tracks List");
+    });
+
+    it("marks only the playing track as current", async () => {
+      const { listButtons, button } = await mountWidget();
+      const current = () =>
+        listButtons().map((btn) => btn.getAttribute("aria-current"));
+
+      expect(current()).toEqual([null, null, null]);
+
+      listButtons()[1].click();
+      expect(current()).toEqual([null, "true", null]);
+
+      button("next_track").click();
+      expect(current()).toEqual([null, null, "true"]);
+
+      button("next_track").click();
+      expect(current()).toEqual(["true", null, null]);
+    });
+
+    it("marks the current track in shuffled order", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      const { listButtons, button } = await mountWidget({
+        settings: { randomize: true },
+      });
+
+      button("next_track").click();
+
+      expect(listButtons()[1].getAttribute("aria-current")).toBe("true");
+    });
+  });
+
+  describe("track title", () => {
+    it("is a polite live region", async () => {
+      const { $ } = await mountWidget();
+
+      expect($("#widget_st_musik_track")!.getAttribute("aria-live")).toBe(
+        "polite",
+      );
+    });
+
+    it("keeps the time display out of the live region", async () => {
+      const { $ } = await mountWidget();
+
+      expect($("#widget_st_musik_duration")!.closest("[aria-live]")).toBeNull();
+    });
+
+    it("updates the live region with each new track", async () => {
+      const { $, button } = await mountWidget({
+        settings: { scrollable_title: true },
+      });
+      const live = $("#widget_st_musik_track")!;
+
+      button("next_track").click();
+      expect(live.textContent).toBe("a.mp3");
+
+      button("next_track").click();
+      expect(live.textContent).toBe("b.mp3");
+    });
+  });
+
+  describe("media session", () => {
+    let handlers: Map<string, () => void>;
+    let session: {
+      metadata: unknown;
+      setActionHandler: ReturnType<typeof vi.fn>;
+    };
+
+    beforeEach(() => {
+      handlers = new Map();
+      session = {
+        metadata: null,
+        setActionHandler: vi.fn((action: string, handler: () => void) => {
+          handlers.set(action, handler);
+        }),
+      };
+      Object.defineProperty(navigator, "mediaSession", {
+        configurable: true,
+        value: session,
+      });
+      vi.stubGlobal(
+        "MediaMetadata",
+        class {
+          title: string;
+          constructor(init: { title: string }) {
+            this.title = init.title;
+          }
+        },
+      );
+    });
+
+    afterEach(() => {
+      delete (navigator as { mediaSession?: unknown }).mediaSession;
+    });
+
+    it("registers handlers for the media keys", async () => {
+      await mountWidget();
+
+      expect([...handlers.keys()].sort()).toEqual([
+        "nexttrack",
+        "pause",
+        "play",
+        "previoustrack",
+        "seekbackward",
+        "seekforward",
+      ]);
+    });
+
+    it("does not register handlers when the manifest is missing", async () => {
+      await mountWidget({ status: 404 });
+
+      expect(session.setActionHandler).not.toHaveBeenCalled();
+    });
+
+    it("plays the first track from the play key", async () => {
+      const { audio, trackText } = await mountWidget();
+
+      handlers.get("play")!();
+
+      expect(audio.src).toBe(trackUrl("a.mp3"));
+      expect(trackText()).toBe("a.mp3");
+      expect(audio.paused).toBe(false);
+    });
+
+    it("pauses from the pause key", async () => {
+      const { audio, button } = await mountWidget();
+      button("play").click();
+
+      handlers.get("pause")!();
+
+      expect(audio.paused).toBe(true);
+    });
+
+    it("switches tracks from the track keys", async () => {
+      const { currentTrack } = await mountWidget();
+
+      handlers.get("nexttrack")!();
+      handlers.get("nexttrack")!();
+      expect(currentTrack()).toBe("b.mp3");
+
+      handlers.get("previoustrack")!();
+      expect(currentTrack()).toBe("a.mp3");
+    });
+
+    it("seeks 10 seconds from the seek keys", async () => {
+      const { audio, button } = await mountWidget();
+      button("play").click();
+      mediaState(audio).duration = 30;
+      audio.currentTime = 12;
+
+      handlers.get("seekforward")!();
+      expect(audio.currentTime).toBe(22);
+
+      handlers.get("seekbackward")!();
+      handlers.get("seekbackward")!();
+      handlers.get("seekbackward")!();
+      expect(audio.currentTime).toBe(0);
+    });
+
+    it("shows the track title in the system media controls", async () => {
+      const { listButtons } = await mountWidget({
+        manifest: JSON.stringify({
+          tracks: [{ src: "a.mp3", title: "Song A" }],
+        }),
+        contentType: "application/json",
+        settings: { manifest: "json" },
+      });
+
+      listButtons()[0].click();
+
+      expect((session.metadata as { title: string }).title).toBe("Song A");
+    });
+
+    it("keeps working when an action is not supported", async () => {
+      session.setActionHandler.mockImplementation((action: string) => {
+        if (action === "seekbackward") {
+          throw new TypeError("not supported");
+        }
+      });
+
+      const { listButtons } = await mountWidget();
+
+      expect(listButtons()).toHaveLength(3);
+      expect(session.setActionHandler).toHaveBeenCalledWith(
+        "seekforward",
+        expect.any(Function),
+      );
+    });
+  });
+
+  it("works without media session support", async () => {
+    const { button, audio } = await mountWidget();
+
+    button("play").click();
+
+    expect("mediaSession" in navigator).toBe(false);
+    expect(audio.paused).toBe(false);
+  });
+});
+
+describe("theme accessibility", () => {
+  it("keeps the win95 focus outline on pressed buttons", () => {
+    const pressedRule = win95Css.match(
+      /\.widget_st_musik \.btn_controlled\s*\{[^}]*\}/,
+    )![0];
+
+    expect(pressedRule).not.toMatch(/outline/);
+  });
+
+  it("stops aero animations for reduced motion", () => {
+    expect(aeroCss).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none !important;[\s\S]*transition: none !important;/,
+    );
+  });
+});

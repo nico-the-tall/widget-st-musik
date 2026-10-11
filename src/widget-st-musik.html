@@ -1,22 +1,52 @@
-<div id="widget_st_musik" class="widget_st_musik">
+<div
+  id="widget_st_musik"
+  class="widget_st_musik"
+  role="region"
+  aria-label="Music player"
+>
   <div class="widget_st_musik_header">
     <span>Musik <span id="widget_st_musik_now_playing"></span></span>
   </div>
   <div class="widget_st_musik">
     <div id="widget_st_musik_top">
       <div id="widget_st_musik_track_wrapper">
-        <span id="widget_st_musik_track" />
+        <span id="widget_st_musik_track" aria-live="polite"></span>
       </div>
       <div id="widget_st_musik_duration_wrapper">
         <span id="widget_st_musik_duration">--:-- / --:--</span>
       </div>
     </div>
     <div id="widget_st_musik_middle">
-      <button id="widget_st_musik_btn_previous_track">⏮</button>
-      <button id="widget_st_musik_btn_rewind" disabled>⏴</button>
-      <button class="btn_primary" id="widget_st_musik_btn_play">⏯</button>
-      <button id="widget_st_musik_btn_forward" disabled>⏵</button>
-      <button id="widget_st_musik_btn_next_track">⏭</button>
+      <button
+        id="widget_st_musik_btn_previous_track"
+        aria-label="Previous track"
+      >
+        ⏮
+      </button>
+      <button
+        id="widget_st_musik_btn_rewind"
+        aria-label="Rewind 10 seconds"
+        disabled
+      >
+        ⏴
+      </button>
+      <button
+        class="btn_primary"
+        id="widget_st_musik_btn_play"
+        aria-label="Play"
+      >
+        ⏯
+      </button>
+      <button
+        id="widget_st_musik_btn_forward"
+        aria-label="Forward 10 seconds"
+        disabled
+      >
+        ⏵
+      </button>
+      <button id="widget_st_musik_btn_next_track" aria-label="Next track">
+        ⏭
+      </button>
     </div>
     <div id="widget_st_musik_secondary">
       <label id="widget_st_musik_volume">
@@ -26,7 +56,8 @@
             height="18px"
             viewBox="48 -912 864 864"
             width="18px"
-            fill="#000000"
+            fill="currentColor"
+            aria-hidden="true"
           >
             <path
               d="M552-152v-75q86-23 139-93.26 53-70.25 53-159.5 0-89.24-53.5-158.74Q637-708 552-734v-75q116 25 190 117t74 211q0 119-73.5 211.5T552-152ZM144-385v-192h144l192-192v576L288-385H144Zm408 55v-302q45.12 20.4 70.56 61.2Q648-530 648-480.52q0 48.52-25.44 89.23Q597.12-350.59 552-330ZM408-595l-90 90H216v48h102l90 90v-228Zm-91 113Z"
@@ -40,6 +71,8 @@
           max="1"
           step="0.01"
           value="1"
+          aria-label="Volume"
+          aria-valuetext="100%"
         />
       </label>
 
@@ -64,7 +97,8 @@
           height="18px"
           viewBox="48 -912 864 864"
           width="18px"
-          fill="#000000"
+          fill="currentColor"
+          aria-hidden="true"
         >
           <path
             d="M576-192v-72h69L531-378l51-51 114 114v-69h72v192H576Zm-333 0-51-51 453-453h-69v-72h192v192h-72v-69L243-192Zm135-339L192-717l51-51 186 186-51 51Z"
@@ -73,7 +107,12 @@
       </button>
     </div>
     <div id="widget_st_musik_bottom">
-      <button id="widget_st_musik_list_btn" class="widget_st_musik_list_btn">
+      <button
+        id="widget_st_musik_list_btn"
+        class="widget_st_musik_list_btn"
+        aria-expanded="false"
+        aria-controls="widget_st_musik_list"
+      >
         Expand Tracks List
       </button>
       <div

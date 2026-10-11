@@ -12,6 +12,7 @@ export default {
   },
   test: {
     environment: "jsdom",
+    css: true,
     coverage: {
       include: ["src/**/*.ts"],
     },

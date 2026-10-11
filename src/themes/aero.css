@@ -302,3 +302,12 @@
 #widget_st_musik_btn_shuffle svg {
   margin-bottom: -3px;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .widget_st_musik button,
+  .widget_st_musik button::before,
+  .widget_st_musik button::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
