@@ -1526,15 +1526,183 @@ describe("scrollable title", () => {
 
       listButtons()[0].click();
 
-      const overflow = LONG.length * 10 - 145;
-      const el = track(shadow);
       expect(isScrolling(shadow)).toBe(true);
-      expect(
-        el.style.getPropertyValue("--widget-st-musik-scroll-distance"),
-      ).toBe(`-${overflow}px`);
-      expect(
-        el.style.getPropertyValue("--widget-st-musik-scroll-duration"),
-      ).toBe(`${(overflow / 30 / 0.7).toFixed(2)}s`);
+    });
+
+    describe("animation", () => {
+      type Frame = { transform: string; offset: number };
+      let animate: ReturnType<typeof vi.fn>;
+      let cancels: ReturnType<typeof vi.fn>[];
+
+      beforeEach(() => {
+        cancels = [];
+        animate = vi.fn(() => {
+          const cancel = vi.fn();
+          cancels.push(cancel);
+          return { cancel } as unknown as Animation;
+        });
+        Object.defineProperty(HTMLElement.prototype, "animate", {
+          configurable: true,
+          value: animate,
+        });
+      });
+
+      afterEach(() => {
+        delete (HTMLElement.prototype as { animate?: unknown }).animate;
+      });
+
+      async function scrollTitle(name: string) {
+        const widget = await mountWidget({
+          manifest: `${name}\n`,
+          settings: { scrollable_title: true },
+        });
+        resetAnimate();
+        widget.listButtons()[0].click();
+        return widget;
+      }
+
+      function resetAnimate() {
+        animate.mockClear();
+        cancels.length = 0;
+      }
+
+      function timeline() {
+        const [frames, options] = animate.mock.lastCall as [
+          Frame[],
+          KeyframeAnimationOptions,
+        ];
+        const duration = options.duration as number;
+        const at = frames.map((frame) => frame.offset * duration);
+
+        return {
+          frames,
+          options,
+          duration,
+          segments: at.slice(1).map((time, i) => time - at[i]),
+        };
+      }
+
+      it("animates the title text, not its box", async () => {
+        const { shadow } = await scrollTitle(LONG);
+
+        expect(animate).toHaveBeenCalledTimes(1);
+        expect(animate.mock.contexts[0]).toBe(
+          track(shadow).querySelector(".widget_st_musik_track_text"),
+        );
+      });
+
+      it("loops forever at a constant speed", async () => {
+        await scrollTitle(LONG);
+        const { options } = timeline();
+
+        expect(options.iterations).toBe(Infinity);
+        expect(options.easing).toBe("linear");
+      });
+
+      it("waits 2s, scrolls to the end, waits 2s, scrolls back", async () => {
+        await scrollTitle(LONG);
+        const overflow = LONG.length * 10 - 145;
+        const { frames, segments } = timeline();
+
+        expect(frames.map((frame) => frame.transform)).toEqual([
+          "translateX(0)",
+          "translateX(0)",
+          `translateX(-${overflow}px)`,
+          `translateX(-${overflow}px)`,
+          "translateX(0)",
+        ]);
+        expect(frames[0].offset).toBe(0);
+        expect(frames[4].offset).toBe(1);
+
+        const move = (overflow / 30) * 1000;
+        expect(segments[0]).toBeCloseTo(2000);
+        expect(segments[1]).toBeCloseTo(move);
+        expect(segments[2]).toBeCloseTo(2000);
+        expect(segments[3]).toBeCloseTo(move);
+      });
+
+      it.each([
+        ["barely", 150],
+        ["slightly", 200],
+        ["very", 1000],
+      ])(
+        "scrolls a title that %s overflows at 30px per second with 2s pauses",
+        async (_, width) => {
+          await scrollTitle("x".repeat(width / 10 - 4) + ".mp3");
+          const { segments } = timeline();
+          const move = ((width - 145) / 30) * 1000;
+
+          expect(segments[0]).toBeCloseTo(2000);
+          expect(segments[1]).toBeCloseTo(move);
+          expect(segments[2]).toBeCloseTo(2000);
+          expect(segments[3]).toBeCloseTo(move);
+        },
+      );
+
+      it("does not animate a title that fits", async () => {
+        await scrollTitle("short.mp3");
+
+        expect(animate).not.toHaveBeenCalled();
+      });
+
+      it("cancels the old animation when the track changes", async () => {
+        const { button } = await mountWidget({
+          manifest: `${LONG}\n${LONG} 2\nshort.mp3\n`,
+          settings: { scrollable_title: true },
+        });
+        resetAnimate();
+
+        button("next_track").click();
+        button("next_track").click();
+        expect(cancels[0]).toHaveBeenCalled();
+        expect(animate).toHaveBeenCalledTimes(2);
+
+        button("next_track").click();
+        expect(cancels[1]).toHaveBeenCalled();
+        expect(animate).toHaveBeenCalledTimes(2);
+      });
+
+      it("does not animate for reduced motion but still clips the title", async () => {
+        vi.stubGlobal(
+          "matchMedia",
+          vi.fn((query: string) => ({
+            matches: query === "(prefers-reduced-motion: reduce)",
+          })),
+        );
+
+        const { shadow } = await scrollTitle(LONG);
+
+        expect(animate).not.toHaveBeenCalled();
+        expect(isScrolling(shadow)).toBe(true);
+      });
+
+      it("animates when reduced motion is not requested", async () => {
+        vi.stubGlobal(
+          "matchMedia",
+          vi.fn(() => ({ matches: false })),
+        );
+
+        await scrollTitle(LONG);
+
+        expect(animate).toHaveBeenCalledTimes(1);
+      });
+
+      it("leaves no inline styles on the title", async () => {
+        const { shadow } = await scrollTitle(LONG);
+
+        expect(track(shadow).getAttribute("style")).toBeNull();
+      });
+    });
+
+    it("still marks long titles without animation support", async () => {
+      const { shadow, listButtons } = await mountWidget({
+        manifest: `${LONG}\n`,
+        settings: { scrollable_title: true },
+      });
+
+      listButtons()[0].click();
+
+      expect(isScrolling(shadow)).toBe(true);
     });
 
     it("does not scroll a title that fits", async () => {

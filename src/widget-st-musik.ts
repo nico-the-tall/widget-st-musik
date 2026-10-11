@@ -69,8 +69,20 @@ function playAudio() {
 }
 
 const TITLE_SCROLL_SPEED = 30;
+const TITLE_SCROLL_PAUSE = 2000;
+
+let titleAnimation: Animation | null = null;
+
+function prefersReducedMotion() {
+  return (
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 function updateTitleScroll() {
+  titleAnimation?.cancel();
+  titleAnimation = null;
   trackEl!.classList.remove("widget_st_musik_track_scrolling");
 
   const overflow = trackEl!.scrollWidth - trackEl!.clientWidth;
@@ -79,17 +91,34 @@ function updateTitleScroll() {
     return;
   }
 
-  const duration = overflow / TITLE_SCROLL_SPEED / 0.7;
-
-  trackEl!.style.setProperty(
-    "--widget-st-musik-scroll-distance",
-    `-${overflow}px`,
-  );
-  trackEl!.style.setProperty(
-    "--widget-st-musik-scroll-duration",
-    `${duration.toFixed(2)}s`,
-  );
   trackEl!.classList.add("widget_st_musik_track_scrolling");
+
+  const textEl = trackEl!.firstElementChild as HTMLElement | null;
+
+  if (
+    !textEl ||
+    // check for animations API
+    typeof textEl.animate !== "function" ||
+    prefersReducedMotion()
+  ) {
+    return;
+  }
+
+  const move = (overflow / TITLE_SCROLL_SPEED) * 1000;
+  const duration = 2 * (TITLE_SCROLL_PAUSE + move);
+  const start = "translateX(0)";
+  const end = `translateX(-${overflow}px)`;
+
+  titleAnimation = textEl.animate(
+    [
+      { transform: start, offset: 0 },
+      { transform: start, offset: TITLE_SCROLL_PAUSE / duration },
+      { transform: end, offset: (TITLE_SCROLL_PAUSE + move) / duration },
+      { transform: end, offset: (2 * TITLE_SCROLL_PAUSE + move) / duration },
+      { transform: start, offset: 1 },
+    ],
+    { duration, iterations: Infinity, easing: "linear" },
+  );
 }
 
 function setTrackText(text: string) {
