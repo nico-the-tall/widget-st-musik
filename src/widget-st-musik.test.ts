@@ -1896,7 +1896,32 @@ describe("untrusted text", () => {
     await flush();
 
     expect(audio.src).toBe(src);
-    expect(shadow.querySelector("a, iframe, link")).toBeNull();
+    expect(
+      shadow.querySelector("a:not(#widget_st_musik_home_link), iframe, link"),
+    ).toBeNull();
+
+    const urlAttributes = [
+      "href",
+      "src",
+      "srcdoc",
+      "action",
+      "formaction",
+      "data",
+      "xlink:href",
+    ];
+
+    for (const el of Array.from(shadow.querySelectorAll("*"))) {
+      for (const attr of Array.from(el.attributes)) {
+        if (
+          !urlAttributes.includes(attr.name) ||
+          (el === audio && attr.name === "src")
+        ) {
+          continue;
+        }
+        expect(attr.value).not.toContain("javascript:");
+      }
+    }
+
     expectNoInjectedMarkup(shadow);
   });
 
@@ -2254,5 +2279,141 @@ describe("theme accessibility", () => {
     expect(aeroCss).toMatch(
       /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none !important;[\s\S]*transition: none !important;/,
     );
+  });
+});
+
+describe("header link", () => {
+  it("links the Musik title to the widget page in a new tab", async () => {
+    const { $ } = await mountWidget();
+    const link = $<HTMLAnchorElement>("#widget_st_musik_home_link")!;
+
+    expect(link.textContent).toBe("Musik");
+    expect(link.getAttribute("href")).toBe("https://widget.st/widget/musik");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("keeps the header text and the now playing slot", async () => {
+    const { $ } = await mountWidget();
+    const header = $(".widget_st_musik_header")!;
+
+    expect(header.textContent!.replace(/\s+/g, " ").trim()).toBe("Musik");
+    expect(
+      header.querySelector(
+        "#widget_st_musik_home_link + #widget_st_musik_now_playing",
+      ),
+    ).not.toBeNull();
+  });
+
+  it("is the only link in the player", async () => {
+    const { shadow } = await mountWidget({ settings: { secondary_bar: true } });
+
+    expect(Array.from(shadow.querySelectorAll("a")).map((a) => a.id)).toEqual([
+      "widget_st_musik_home_link",
+    ]);
+  });
+
+  it.each([
+    ["win95", win95Css],
+    ["aero", aeroCss],
+    ["brutalist", brutalistCss],
+  ])("looks like plain header text in %s", (_, css) => {
+    const rule = css.match(/#widget_st_musik_home_link\s*\{[^}]*\}/)![0];
+
+    expect(rule).toMatch(/color:\s*inherit/);
+    expect(rule).toMatch(/text-decoration:\s*none/);
+    expect(rule).toMatch(/cursor:\s*pointer/);
+  });
+});
+
+describe("default volume", () => {
+  const slider = (shadow: ShadowRoot) =>
+    shadow.querySelector<HTMLInputElement>("#widget_st_musik_volume_slider")!;
+
+  it("defaults to full volume", async () => {
+    const { audio, shadow } = await mountWidget({
+      settings: { secondary_bar: true },
+    });
+
+    expect(audio.volume).toBe(1);
+    expect(slider(shadow).value).toBe("1");
+    expect(slider(shadow).getAttribute("aria-valuetext")).toBe("100%");
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [40, 0.4, "0.4", "40%"],
+    [0, 0, "0", "0%"],
+    [100, 1, "1", "100%"],
+    ["40", 0.4, "0.4", "40%"],
+    [" 25 ", 0.25, "0.25", "25%"],
+  ])(
+    "sets %j as the starting volume",
+    async (value, volume, sliderValue, text) => {
+      const { audio, shadow } = await mountWidget({
+        settings: { secondary_bar: true, default_volume: value },
+      });
+
+      expect(audio.volume).toBeCloseTo(volume);
+      expect(slider(shadow).value).toBe(sliderValue);
+      expect(slider(shadow).getAttribute("aria-valuetext")).toBe(text);
+      expect(consoleError).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    [150, 1],
+    [-10, 0],
+    ["1000", 1],
+  ])("clamps %j into 0-100", async (value, volume) => {
+    const { audio } = await mountWidget({
+      settings: { default_volume: value },
+    });
+
+    expect(audio.volume).toBe(volume);
+  });
+
+  it.each([["loud"], [""], [null], [true], [[]], [{}]])(
+    "ignores an invalid value %j and logs an error",
+    async (value) => {
+      const { audio, shadow } = await mountWidget({
+        settings: { secondary_bar: true, default_volume: value },
+      });
+
+      expect(audio.volume).toBe(1);
+      expect(slider(shadow).value).toBe("1");
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("default_volume"),
+      );
+    },
+  );
+
+  it("applies without the secondary bar", async () => {
+    const { audio } = await mountWidget({ settings: { default_volume: 30 } });
+
+    expect(audio.volume).toBeCloseTo(0.3);
+  });
+
+  it("keeps the volume when switching tracks", async () => {
+    const { audio, button } = await mountWidget({
+      settings: { default_volume: 30 },
+    });
+
+    button("next_track").click();
+    button("next_track").click();
+
+    expect(audio.volume).toBeCloseTo(0.3);
+  });
+
+  it("can still be changed with the slider", async () => {
+    const { audio, shadow } = await mountWidget({
+      settings: { secondary_bar: true, default_volume: 30 },
+    });
+
+    slider(shadow).value = "0.8";
+    slider(shadow).dispatchEvent(new Event("input"));
+
+    expect(audio.volume).toBe(0.8);
+    expect(slider(shadow).getAttribute("aria-valuetext")).toBe("80%");
   });
 });

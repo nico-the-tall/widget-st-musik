@@ -168,6 +168,12 @@
   border-radius: 0px;
 }
 
+#widget_st_musik_home_link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 #widget_st_musik_top {
   display: grid;
   gap: 5px;

@@ -9,6 +9,7 @@ interface Settings {
   secondary_bar?: boolean;
   scrollable_title?: boolean;
   manifest?: string;
+  default_volume?: number | string;
 }
 
 interface Track {
@@ -314,10 +315,46 @@ function initialize() {
   }
 }
 
+function getDefaultVolume() {
+  const value = settings.default_volume;
+
+  if (value === undefined) {
+    return 1;
+  }
+
+  const volume =
+    typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+
+  if (typeof volume !== "number" || !Number.isFinite(volume)) {
+    console.error(
+      "The default_volume for widget_st_musik must be a number from 0 to 100. Using 100.",
+    );
+
+    return 1;
+  }
+
+  return Math.min(Math.max(volume, 0), 100) / 100;
+}
+
+function initializeVolume() {
+  const volume = getDefaultVolume();
+  audio.volume = volume;
+
+  const volumeSlider = player!.querySelector<HTMLInputElement>(
+    "#widget_st_musik_volume_slider",
+  );
+
+  if (volumeSlider) {
+    volumeSlider.value = String(volume);
+    volumeSlider.setAttribute("aria-valuetext", `${Math.round(volume * 100)}%`);
+  }
+}
+
 function initializePlayer() {
   trackEl = player!.querySelector("#widget_st_musik_track")!;
   durationEl = player!.querySelector("#widget_st_musik_duration")!;
   setTrackText("No track selected");
+  initializeVolume();
 
   if (settings.scrollable_title && typeof ResizeObserver !== "undefined") {
     new ResizeObserver(updateTitleScroll).observe(trackEl);
