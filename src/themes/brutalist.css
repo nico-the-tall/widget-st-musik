@@ -252,6 +252,12 @@
   margin-bottom: -3px;
 }
 
+#widget_st_musik_btn_repeat {
+  border-left-width: 4px;
+  margin-left: -2px;
+  width: calc(100% + 2px);
+}
+
 #widget_st_musik_list {
   display: flex;
   flex-direction: column;
