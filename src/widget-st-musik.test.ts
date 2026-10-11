@@ -1969,15 +1969,15 @@ describe("a11y", () => {
     expect(button(name).getAttribute("aria-label")).toBe(label);
   });
 
-  it("keeps the visible button symbols", async () => {
-    const { button } = await mountWidget();
+  it.each(["previous_track", "rewind", "play", "forward", "next_track"])(
+    "shows an icon on the %s button",
+    async (name) => {
+      const { button } = await mountWidget();
 
-    expect(
-      ["previous_track", "rewind", "play", "forward", "next_track"].map(
-        (name) => button(name).textContent!.trim(),
-      ),
-    ).toEqual(["⏮", "⏴", "⏯", "⏵", "⏭"]);
-  });
+      expect(button(name).querySelectorAll("svg")).toHaveLength(1);
+      expect(button(name).textContent!.trim()).toBe("");
+    },
+  );
 
   it("hides every icon from assistive technology", async () => {
     const { shadow } = await mountWidget({
@@ -2466,5 +2466,49 @@ describe("default volume", () => {
 
     expect(audio.volume).toBe(0.8);
     expect(slider(shadow).getAttribute("aria-valuetext")).toBe("80%");
+  });
+});
+
+describe("icon and row layout", () => {
+  it("draws every button icon at the same size", async () => {
+    const { shadow } = await mountWidget({ settings: { secondary_bar: true } });
+    const icons = Array.from(shadow.querySelectorAll("button svg"));
+
+    expect(icons).toHaveLength(7);
+    icons.forEach((icon) => {
+      expect(icon.getAttribute("viewBox")).toBe("48 -912 864 864");
+      expect(parseFloat(icon.getAttribute("width")!)).toBe(18);
+      expect(parseFloat(icon.getAttribute("height")!)).toBe(18);
+    });
+  });
+
+  describe.each([
+    ["win95", win95Css],
+    ["aero", aeroCss],
+    ["brutalist", brutalistCss],
+  ])("%s", (_, css) => {
+    const rule = (selector: RegExp) => css.match(selector)![0];
+
+    it("stretches the secondary row items instead of centering them", () => {
+      const secondary = rule(/#widget_st_musik_secondary\s*\{[^}]*\}/);
+
+      expect(secondary).toMatch(/align-items:\s*stretch/);
+      expect(secondary).not.toMatch(/align-items:\s*center/);
+    });
+
+    it("takes the volume icon off the text line", () => {
+      const volumeIcon = rule(
+        /#widget_st_musik_volume\s*\{[^}]*?svg\s*\{[^}]*\}/,
+      );
+
+      expect(volumeIcon).toMatch(/display:\s*block/);
+      expect(volumeIcon).not.toMatch(/margin-bottom/);
+    });
+
+    it("styles the control and secondary button icons with one rule", () => {
+      expect(css).toMatch(
+        /#widget_st_musik_middle svg,\s*#widget_st_musik_btn_repeat svg,\s*#widget_st_musik_btn_shuffle svg\s*\{/,
+      );
+    });
   });
 });

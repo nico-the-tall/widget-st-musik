@@ -146,7 +146,7 @@
 #widget_st_musik_secondary {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-items: center;
+  align-items: stretch;
 }
 
 #widget_st_musik_volume {
@@ -157,7 +157,7 @@
   min-width: 0;
 
   svg {
-    margin-bottom: -4px;
+    display: block;
     padding-left: 1px;
   }
 }
@@ -247,6 +247,7 @@
   background: var(--color-bg);
 }
 
+#widget_st_musik_middle svg,
 #widget_st_musik_btn_repeat svg,
 #widget_st_musik_btn_shuffle svg {
   margin-bottom: -3px;
